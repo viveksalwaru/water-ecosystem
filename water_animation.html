@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Network — Animated Flow Diagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    @keyframes dash { to { stroke-dashoffset: -24; } }
+    .flow      { stroke-dasharray: 8 8; animation: dash 1s linear infinite; }
+    .flow.slow { animation-duration: 1.8s; }
+    .flow.off  { animation-play-state: paused; opacity: 0.15; }
+  </style>
+</head>
+<body>
+
+<div class="dm-nav">
+  <span class="dm-nav-brand">DeepManthan AI</span>
+  <span class="dm-nav-sep">|</span>
+  <a href="index.html">← Back to hub</a>
+</div>
+
+<div class="dm-page-header">
+  <div class="dm-eyebrow">How a water network works</div>
+  <h1>Animated network flow diagram</h1>
+  <p>Animated water flow — reservoir, pump station, elevated tank, trunk mains, PRV, and consumer zones — with live head pressure at each node. Switch scenarios to see the network respond.</p>
+</div>
+
+<div class="dm-container">
+  <div class="dm-controls">
+    <button class="dm-btn" id="btn-pause">⏸ Pause</button>
+    <label>Flow speed</label>
+    <input type="range" id="speed" min="0.3" max="3" step="0.1" value="1" oninput="setSpeed(this.value)" style="width:90px;">
+    <span id="speed-out" style="font-size:0.82rem;font-weight:700;color:#38E1FF;font-family:'IBM Plex Mono',monospace;min-width:32px;">1.0×</span>
+    <label style="margin-left:8px;">Demand scenario</label>
+    <select id="scenario" onchange="setScenario(this.value)">
+      <option value="normal">Normal (daytime)</option>
+      <option value="peak">Morning peak demand</option>
+      <option value="night">Low demand (night)</option>
+      <option value="leak">Pipe leak — Zone B</option>
+    </select>
+  </div>
+
+  <div class="dm-svg-card">
+    <svg id="main-svg" width="100%" viewBox="0 0 900 460" font-family="'Space Grotesk',sans-serif">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- ground -->
+      <rect x="0" y="410" width="900" height="50" fill="rgba(10,15,26,0.8)"/>
+      <line x1="0" y1="410" x2="900" y2="410" stroke="rgba(56,225,255,0.15)" stroke-width="1"/>
+
+      <!-- RESERVOIR -->
+      <rect x="28" y="240" width="90" height="150" rx="6" fill="rgba(56,225,255,0.08)" stroke="rgba(56,225,255,0.4)" stroke-width="1.5"/>
+      <rect x="28" y="310" width="90" height="80" rx="0" fill="rgba(56,225,255,0.3)"/>
+      <text x="73" y="228" text-anchor="middle" font-size="12" font-weight="700" fill="#38E1FF">Reservoir</text>
+      <rect x="30" y="312" width="86" height="18" rx="3" fill="rgba(10,15,26,0.7)"/>
+      <text x="73" y="325" text-anchor="middle" font-size="10" font-weight="600" fill="#38E1FF" id="res-head">0 m head</text>
+      <text x="73" y="404" text-anchor="middle" font-size="10" fill="#7DD3C0">Source</text>
+
+      <!-- suction pipe -->
+      <line id="p-suc" x1="118" y1="355" x2="200" y2="355" class="flow" stroke="#38E1FF" stroke-width="7" stroke-linecap="round" marker-end="url(#arr)"/>
+
+      <!-- PUMP STATION -->
+      <rect id="pump-rect" x="200" y="322" width="108" height="68" rx="8" fill="rgba(251,191,36,0.12)" stroke="rgba(251,191,36,0.5)" stroke-width="1.5"/>
+      <text x="254" y="350" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">Pump</text>
+      <text x="254" y="366" text-anchor="middle" font-size="10" fill="#fbbf24" id="pump-spd">85% VFD</text>
+      <text x="254" y="403" text-anchor="middle" font-size="10" fill="#7DD3C0">Pump station</text>
+      <text x="254" y="312" text-anchor="middle" font-size="10" fill="#fbbf24">⚡ <tspan id="pump-kw" font-family="'IBM Plex Mono',monospace">42</tspan> kW</text>
+
+      <!-- rising main -->
+      <rect x="313" y="170" width="14" height="175" rx="4" fill="rgba(56,225,255,0.08)" stroke="rgba(56,225,255,0.2)" stroke-width="0.5"/>
+      <line id="p-rise" x1="320" y1="330" x2="320" y2="172" class="flow" stroke="#38E1FF" stroke-width="8" stroke-linecap="round" marker-end="url(#arr)"/>
+
+      <!-- ELEVATED TANK -->
+      <rect x="280" y="60" width="88" height="112" rx="8" fill="rgba(56,225,255,0.08)" stroke="rgba(56,225,255,0.4)" stroke-width="1.5"/>
+      <rect x="283" y="100" width="82" height="70" id="tank-fill" rx="0" fill="rgba(56,225,255,0.3)"/>
+      <text x="324" y="48" text-anchor="middle" font-size="12" font-weight="700" fill="#38E1FF">Elevated Tank</text>
+      <rect x="283" y="104" width="82" height="18" rx="3" fill="rgba(10,15,26,0.7)"/>
+      <text x="324" y="117" text-anchor="middle" font-size="10" font-weight="600" fill="#38E1FF" id="tank-lbl">72% · 45 m head</text>
+      <text x="324" y="184" text-anchor="middle" font-size="10" fill="#7DD3C0">Storage buffer</text>
+
+      <!-- trunk main -->
+      <rect x="368" y="98" width="432" height="14" rx="4" fill="rgba(56,225,255,0.06)" stroke="rgba(56,225,255,0.2)" stroke-width="0.5"/>
+      <line id="p-trunk" x1="368" y1="105" x2="800" y2="105" class="flow slow" stroke="#38E1FF" stroke-width="8" stroke-linecap="round" marker-end="url(#arr)"/>
+
+      <!-- PRV -->
+      <rect x="510" y="72" width="76" height="46" rx="7" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.4)" stroke-width="1.5"/>
+      <text x="548" y="92" text-anchor="middle" font-size="11" font-weight="700" fill="#a78bfa">PRV</text>
+      <text x="548" y="107" text-anchor="middle" font-size="9" fill="#a78bfa" id="prv-lbl">Set: 30 m</text>
+      <line x1="548" y1="118" x2="548" y2="105" stroke="rgba(167,139,250,0.4)" stroke-width="1" stroke-dasharray="3 2"/>
+
+      <!-- Zone A -->
+      <line id="p-za" x1="620" y1="105" x2="620" y2="184" class="flow" stroke="#2DD4BF" stroke-width="6" stroke-linecap="round" marker-end="url(#arr)"/>
+      <rect x="570" y="184" width="106" height="64" rx="7" fill="rgba(45,212,191,0.08)" stroke="rgba(45,212,191,0.4)" stroke-width="1.5"/>
+      <text x="623" y="210" text-anchor="middle" font-size="12" font-weight="700" fill="#2DD4BF">Zone A</text>
+      <text x="623" y="225" text-anchor="middle" font-size="10" fill="#7DD3C0">Residential</text>
+      <text x="623" y="260" text-anchor="middle" font-size="9" fill="#A0D8FF" id="za-lbl">28 L/s · Head 28 m ✓</text>
+
+      <!-- Zone B -->
+      <line id="p-zb" x1="765" y1="105" x2="765" y2="184" class="flow" stroke="#2DD4BF" stroke-width="6" stroke-linecap="round" marker-end="url(#arr)"/>
+      <rect id="zb-rect" x="715" y="184" width="106" height="64" rx="7" fill="rgba(45,212,191,0.08)" stroke="rgba(45,212,191,0.4)" stroke-width="1.5"/>
+      <text x="768" y="210" text-anchor="middle" font-size="12" font-weight="700" fill="#2DD4BF">Zone B</text>
+      <text x="768" y="225" text-anchor="middle" font-size="10" fill="#7DD3C0">Commercial</text>
+      <text x="768" y="260" text-anchor="middle" font-size="9" fill="#A0D8FF" id="zb-lbl">40 L/s · Head 22 m ✓</text>
+
+      <!-- Zone C branch -->
+      <line id="p-zc" x1="700" y1="105" x2="700" y2="310" class="flow slow" stroke="#2DD4BF" stroke-width="5" stroke-linecap="round" marker-end="url(#arr)"/>
+      <rect x="648" y="310" width="108" height="64" rx="7" fill="rgba(45,212,191,0.08)" stroke="rgba(45,212,191,0.4)" stroke-width="1.5"/>
+      <text x="702" y="336" text-anchor="middle" font-size="12" font-weight="700" fill="#2DD4BF">Zone C</text>
+      <text x="702" y="351" text-anchor="middle" font-size="10" fill="#7DD3C0">Industrial</text>
+      <text x="702" y="385" text-anchor="middle" font-size="9" fill="#A0D8FF" id="zc-lbl">22 L/s · Head 18 m ✓</text>
+
+      <!-- MPC controller -->
+      <rect x="28" y="60" width="188" height="130" rx="8" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.35)" stroke-width="1.5"/>
+      <text x="122" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">MPC Controller</text>
+      <text x="122" y="100" text-anchor="middle" font-size="9" fill="#A0D8FF">AI optimisation layer</text>
+      <line x1="44" y1="108" x2="202" y2="108" stroke="rgba(251,191,36,0.2)" stroke-width="0.5"/>
+      <text x="122" y="122" text-anchor="middle" font-size="10" fill="#A0D8FF" id="mpc-tariff">Tariff: Off-peak ₹3.2</text>
+      <text x="122" y="138" text-anchor="middle" font-size="10" fill="#A0D8FF" id="mpc-pump">Pump: 85% · 42 kW</text>
+      <text x="122" y="154" text-anchor="middle" font-size="10" fill="#A0D8FF" id="mpc-tank">Tank: 72% · filling</text>
+      <text x="122" y="170" text-anchor="middle" font-size="10" fill="#2DD4BF" id="mpc-save">Saving: ₹4,180 today</text>
+      <line x1="216" y1="155" x2="216" y2="356" stroke="rgba(251,191,36,0.25)" stroke-width="0.75" stroke-dasharray="4 3"/>
+
+      <!-- Leak indicator -->
+      <g id="leak-g" opacity="0">
+        <circle cx="765" cy="105" r="13" fill="rgba(248,113,113,0.9)"/>
+        <text x="765" y="109" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">!</text>
+        <text x="765" y="146" text-anchor="middle" font-size="10" font-weight="700" fill="#f87171">LEAK DETECTED</text>
+        <text x="765" y="159" text-anchor="middle" font-size="9" fill="#fca5a5">ML anomaly · −8 m head</text>
+      </g>
+    </svg>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;font-size:0.78rem;color:#7DD3C0;">
+    <span>■ <span style="color:#38E1FF;">Pressurised main (pump output)</span></span>
+    <span>■ <span style="color:#2DD4BF;">Distribution to zones</span></span>
+    <span>■ <span style="color:#fbbf24;">Pump station (energy input)</span></span>
+    <span>■ <span style="color:#a78bfa;">PRV (pressure reducer)</span></span>
+  </div>
+
+  <div class="dm-insight" style="margin-top:14px;">
+    <strong>Follow the head (left to right):</strong> The <strong>reservoir</strong> has near-zero head. The <strong>pump station</strong> adds ~50 m head by expending electricity. The <strong>rising main</strong> carries pressurised water up to the <strong>elevated tank</strong>, whose physical height stores this energy as potential head. Gravity then drives water through the <strong>trunk main</strong> to each zone. A <strong>PRV</strong> steps pressure down at zone boundaries. The <strong>MPC controller</strong> (amber box) decides every 15 minutes: pump now or coast on the tank — optimising against tariff rates, tank level, and predicted demand.
+  </div>
+</div>
+
+<div class="dm-footer">DeepManthan AI · Water Distribution Network Intelligence · Animated Flow Diagram</div>
+
+<script>
+let paused = false, speed = 1;
+const pipes = document.querySelectorAll('.flow');
+document.getElementById('btn-pause').addEventListener('click', function() {
+  paused = !paused;
+  this.textContent = paused ? '▶ Resume' : '⏸ Pause';
+  pipes.forEach(p => p.classList.toggle('off', paused));
+});
+function setSpeed(v) {
+  speed = parseFloat(v);
+  document.getElementById('speed-out').textContent = parseFloat(v).toFixed(1) + '×';
+  pipes.forEach(p => {
+    const base = p.classList.contains('slow') ? 1.8 : 1;
+    p.style.animationDuration = (base / speed) + 's';
+  });
+}
+const sc = {
+  normal: { pump:85, kw:42, tank:'72% · 45 m head', tariff:'Off-peak ₹3.2', save:'₹4,180', mpc2:'Pump: 85% · 42 kW', mpc3:'Tank: 72% · filling', za:'28 L/s · Head 28 m ✓', zb:'40 L/s · Head 22 m ✓', zc:'22 L/s · Head 18 m ✓', prv:'Set: 30 m', pFill:'rgba(251,191,36,0.12)', pStroke:'rgba(251,191,36,0.5)', leak:false, tankH:70 },
+  peak:   { pump:15, kw:2,  tank:'48% · 38 m head', tariff:'Peak ₹8.1 — coast', save:'₹4,180', mpc2:'Pump: 15% · 2 kW', mpc3:'Tank: 48% · drawing', za:'40 L/s · Head 24 m ✓', zb:'52 L/s · Head 18 m ✓', zc:'28 L/s · Head 14 m ✓', prv:'Set: 28 m', pFill:'rgba(56,225,255,0.04)', pStroke:'rgba(56,225,255,0.2)', leak:false, tankH:44 },
+  night:  { pump:90, kw:48, tank:'88% · 50 m head', tariff:'Off-peak ₹3.2', save:'₹4,180', mpc2:'Pump: 90% · 48 kW', mpc3:'Tank: 88% · near full', za:'6 L/s · Head 32 m ✓', zb:'4 L/s · Head 28 m ✓', zc:'3 L/s · Head 24 m ✓', prv:'Set: 32 m', pFill:'rgba(251,191,36,0.12)', pStroke:'rgba(251,191,36,0.5)', leak:false, tankH:84 },
+  leak:   { pump:85, kw:44, tank:'70% · 43 m head', tariff:'Off-peak ₹3.2', save:'ALERT — leak', mpc2:'Pump: 85% · 44 kW', mpc3:'Tank: 70% · anomaly!', za:'28 L/s · Head 28 m ✓', zb:'35 L/s · Head 14 m ⚠', zc:'22 L/s · Head 18 m ✓', prv:'Set: 30 m', pFill:'rgba(251,191,36,0.12)', pStroke:'rgba(251,191,36,0.5)', leak:true, tankH:68 }
+};
+function setScenario(k) {
+  const d = sc[k];
+  document.getElementById('pump-spd').textContent = d.pump + '% VFD';
+  document.getElementById('pump-kw').textContent = d.kw;
+  document.getElementById('tank-lbl').textContent = d.tank;
+  document.getElementById('mpc-tariff').textContent = 'Tariff: ' + d.tariff;
+  document.getElementById('mpc-pump').textContent = d.mpc2;
+  document.getElementById('mpc-tank').textContent = d.mpc3;
+  document.getElementById('mpc-save').textContent = 'Saving: ' + d.save;
+  document.getElementById('za-lbl').textContent = d.za;
+  document.getElementById('zb-lbl').textContent = d.zb;
+  document.getElementById('zc-lbl').textContent = d.zc;
+  document.getElementById('prv-lbl').textContent = d.prv;
+  const pr = document.getElementById('pump-rect');
+  pr.setAttribute('fill', d.pFill); pr.setAttribute('stroke', d.pStroke);
+  document.getElementById('leak-g').setAttribute('opacity', d.leak ? '1' : '0');
+  const zb = document.getElementById('zb-rect');
+  zb.setAttribute('fill', d.leak ? 'rgba(248,113,113,0.1)' : 'rgba(45,212,191,0.08)');
+  zb.setAttribute('stroke', d.leak ? 'rgba(248,113,113,0.5)' : 'rgba(45,212,191,0.4)');
+  const h = Math.round((d.tankH / 100) * 70);
+  document.getElementById('tank-fill').setAttribute('y', 170 - h);
+  document.getElementById('tank-fill').setAttribute('height', h);
+  const op = d.pump < 25 ? 0.12 : 1;
+  ['p-suc', 'p-rise'].forEach(id => { document.getElementById(id).style.opacity = op; });
+}
+</script>
+</body>
+</html>

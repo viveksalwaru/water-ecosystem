@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Network — Pressure Zone Control</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="dm-nav">
+  <span class="dm-nav-brand">DeepManthan AI</span>
+  <span class="dm-nav-sep">|</span>
+  <a href="index.html">← Back to hub</a>
+</div>
+
+<div class="dm-page-header">
+  <div class="dm-eyebrow">Network Health &amp; Control</div>
+  <h1>Pressure zone control</h1>
+  <p>A self-controlling network that responds to demand spikes and pipe faults. Trigger an event and watch the AI escalation ladder — PRV → pump speed → zone isolation — respond in real time.</p>
+</div>
+
+<div class="dm-container">
+
+  <h2 class="dm-h2" style="margin-top:0;">Trigger a network event</h2>
+  <p style="font-size:0.88rem;color:#A0D8FF;margin-bottom:12px;">Click an event below. The AI controller responds in real time.</p>
+  <div class="dm-trigger-grid">
+    <button class="dm-trigger active" onclick="setEvent('normal',this)"><div class="t-icon">✅</div><div class="t-name">Normal operation</div><div class="t-desc">Steady demand, all zones healthy</div></button>
+    <button class="dm-trigger" onclick="setEvent('demandspike',this)"><div class="t-icon">📈</div><div class="t-name">Demand spike — Zone A</div><div class="t-desc">Sudden residential surge (heatwave)</div></button>
+    <button class="dm-trigger" onclick="setEvent('burst',this)"><div class="t-icon">💥</div><div class="t-name">Main burst — Zone B</div><div class="t-desc">Catastrophic pressure drop</div></button>
+    <button class="dm-trigger" onclick="setEvent('leak',this)"><div class="t-icon">🔍</div><div class="t-name">Slow leak — Zone C</div><div class="t-desc">Subtle anomaly, ML detection</div></button>
+    <button class="dm-trigger" onclick="setEvent('lownight',this)"><div class="t-icon">🌙</div><div class="t-name">Night minimum demand</div><div class="t-desc">PRV prevents overpressure</div></button>
+  </div>
+
+  <div class="dm-alert" id="dm-alert"><strong id="al-title">Alert:</strong> <span id="al-msg"></span></div>
+
+  <h2 class="dm-h2" id="health">Zone pressure health</h2>
+  <div class="dm-zone-grid">
+    <div class="dm-zone ok" id="zc-a">
+      <div class="z-name">Zone A — Residential</div>
+      <div class="z-type">6,200 connections · DMA 1</div>
+      <div class="dm-bar-wrap"><div class="dm-bar" id="zb-a" style="width:75%;background:#2DD4BF;"></div></div>
+      <div class="z-vals"><span id="zh-a">Head: 28 m</span><span id="zf-a">32 L/s</span></div>
+      <span class="dm-status ok" id="zs-a">✓ Healthy</span>
+    </div>
+    <div class="dm-zone ok" id="zc-b">
+      <div class="z-name">Zone B — Commercial</div>
+      <div class="z-type">840 meters · DMA 2</div>
+      <div class="dm-bar-wrap"><div class="dm-bar" id="zb-b" style="width:65%;background:#2DD4BF;"></div></div>
+      <div class="z-vals"><span id="zh-b">Head: 22 m</span><span id="zf-b">40 L/s</span></div>
+      <span class="dm-status ok" id="zs-b">✓ Healthy</span>
+    </div>
+    <div class="dm-zone ok" id="zc-c">
+      <div class="z-name">Zone C — Industrial</div>
+      <div class="z-type">12 large consumers · DMA 3</div>
+      <div class="dm-bar-wrap"><div class="dm-bar" id="zb-c" style="width:55%;background:#2DD4BF;"></div></div>
+      <div class="z-vals"><span id="zh-c">Head: 18 m</span><span id="zf-c">22 L/s</span></div>
+      <span class="dm-status ok" id="zs-c">✓ Healthy</span>
+    </div>
+  </div>
+
+  <h2 class="dm-h2">AI escalation ladder</h2>
+  <p style="font-size:0.88rem;color:#A0D8FF;margin-bottom:12px;">The controller works through actions in order — least invasive first. Trigger an event above to see which steps activate.</p>
+  <div class="dm-ladder">
+    <div class="dm-ladder-step" id="ls1"><div class="dm-ls-num" id="ln1">1</div><div><div class="dm-ls-title">Adjust PRV setpoint</div><div class="dm-ls-desc">Raise or lower the pressure reducing valve to redistribute head across zones. Fast, non-disruptive.</div></div></div>
+    <div class="dm-ladder-step" id="ls2"><div class="dm-ls-num" id="ln2">2</div><div><div class="dm-ls-title">Increase pump speed (VFD)</div><div class="dm-ls-desc">MPC raises VFD setpoint to boost system pressure. Uses more electricity but maintains supply to all zones.</div></div></div>
+    <div class="dm-ladder-step" id="ls3"><div class="dm-ls-num" id="ln3">3</div><div><div class="dm-ls-title">Stage additional pump online</div><div class="dm-ls-desc">Start standby pump when a single pump at 100% cannot meet demand. Soft-start to avoid demand-charge spike.</div></div></div>
+    <div class="dm-ladder-step" id="ls4"><div class="dm-ls-num" id="ln4">4</div><div><div class="dm-ls-title">Isolate affected zone valve</div><div class="dm-ls-desc">Close zone isolation valve to contain a burst or major leak, protecting network pressure in healthy zones.</div></div></div>
+    <div class="dm-ladder-step" id="ls5"><div class="dm-ls-num" id="ln5">5</div><div><div class="dm-ls-title">Operator alert + field crew dispatch</div><div class="dm-ls-desc">SCADA alarm raised. AI pinpoints leak to within 2–3 pipe segments using pressure differential. Crew dispatched.</div></div></div>
+  </div>
+
+  <h2 class="dm-h2">24-hour pressure trend — Zone B nodal head</h2>
+  <p style="font-size:0.88rem;color:#A0D8FF;margin-bottom:10px;">Cyan = normal (15–35 m). Amber = warning. Red = fault / anomaly vs. ML model prediction.</p>
+  <div class="dm-trend-wrap">
+    <div class="dm-trend-bars" id="trend-bars"></div>
+    <div style="display:flex;gap:20px;margin-top:10px;font-size:0.75rem;color:#7DD3C0;">
+      <span>■ <span style="color:#38E1FF;">Normal</span></span>
+      <span>■ <span style="color:#fbbf24;">Warning (&lt;15 m or &gt;40 m)</span></span>
+      <span>■ <span style="color:#f87171;">Fault / anomaly</span></span>
+    </div>
+  </div>
+
+  <div class="dm-insight" id="ev-insight">
+    <strong>Normal operation:</strong> All zones within pressure bounds. MPC in energy-saving mode — pump at 75% VFD, drawing on tank. No anomalies detected by ML in the last 24 hours.
+  </div>
+
+</div>
+
+<div class="dm-footer">DeepManthan AI · Water Distribution Network Intelligence · Pressure Zone Control</div>
+
+<script>
+const evts={
+  normal:{al:false,za:{h:28,f:32,c:'ok',b:75,s:'✓ Healthy',sc:'ok'},zb:{h:22,f:40,c:'ok',b:65,s:'✓ Healthy',sc:'ok'},zc:{h:18,f:22,c:'ok',b:55,s:'✓ Healthy',sc:'ok'},steps:[],ins:'<strong>Normal operation:</strong> All zones within pressure bounds. MPC in energy-saving mode — pump at 75% VFD. No anomalies detected in the last 24 hours.',trend:[28,27,26,25,24,23,25,28,29,30,28,26,24,25,26,27,28,29,27,25,24,26,27,28]},
+  demandspike:{al:true,aT:'Demand spike — Zone A',aM:'Residential demand +45% above forecast. Heatwave event. AI escalating pump speed.',za:{h:14,f:54,c:'warn',b:40,s:'⚠ Low pressure',sc:'warn'},zb:{h:18,f:40,c:'ok',b:55,s:'✓ Healthy',sc:'ok'},zc:{h:16,f:22,c:'ok',b:48,s:'✓ Healthy',sc:'ok'},steps:[1,2],ins:'<strong>Demand spike — Zone A:</strong> Heatwave has pushed residential demand 45% above ML forecast. Zone A head dropped to 14 m. MPC has (1) raised PRV setpoint and (2) raised pump VFD from 75% to 92%. Head recovering.',trend:[28,27,26,25,24,23,14,12,10,13,16,18,20,22,24,26,28,29,27,25,24,26,27,28]},
+  burst:{al:true,aT:'CRITICAL: Main burst — Zone B',aM:'Catastrophic pressure loss. Zone B head at 2 m. Isolation valve closing. Field crew dispatched.',za:{h:26,f:32,c:'ok',b:72,s:'✓ Healthy',sc:'ok'},zb:{h:2,f:5,c:'danger',b:8,s:'✗ BURST — isolated',sc:'danger'},zc:{h:19,f:22,c:'ok',b:56,s:'✓ Healthy',sc:'ok'},steps:[1,2,3,4,5],ins:'<strong>Main burst — Zone B:</strong> Full escalation triggered. PRV adjusted, pump at 100% VFD, standby pump staged on. Zone B isolation valve closed to protect Zones A and C. ML has pinpointed burst to a 380 m segment of the DN400 main. Field crew ETA: 18 minutes.',trend:[28,27,26,25,24,23,25,28,2,2,2,8,14,18,22,26,28,29,27,25,24,26,27,28]},
+  leak:{al:true,aT:'ML anomaly — slow leak Zone C',aM:'Zone C head 3 m below model prediction. Consistent 30-minute divergence. Probable slow leak 50–80 L/min.',za:{h:28,f:32,c:'ok',b:75,s:'✓ Healthy',sc:'ok'},zb:{h:22,f:40,c:'ok',b:65,s:'✓ Healthy',sc:'ok'},zc:{h:15,f:25,c:'warn',b:44,s:'⚠ ML anomaly — leak?',sc:'warn'},steps:[5],ins:'<strong>Slow leak — Zone C:</strong> ML model predicted 18 m head at Node C-7. Sensor reads 15 m — a 3 m gap held consistently for 32 minutes. This matches a slow leak of ~60 L/min. Hazen-Williams model isolates the anomaly to a 200 m segment of the DN250 branch. Traditional survey: 2–4 weeks. AI detection: 32 minutes.',trend:[28,27,26,25,24,23,25,28,26,24,22,20,18,17,16,15,15,15,15,16,17,18,19,20]},
+  lownight:{al:false,za:{h:38,f:5,c:'ok',b:95,s:'✓ PRV protecting',sc:'ok'},zb:{h:32,f:4,c:'ok',b:80,s:'✓ PRV protecting',sc:'ok'},zc:{h:28,f:3,c:'ok',b:70,s:'✓ Healthy',sc:'ok'},steps:[1],ins:'<strong>Night minimum demand:</strong> Demand at 8% of daytime peak. Without intervention, pump output would create 55 m+ head — risking pipe joint failures. AI lowered PRV setpoints to cap zone pressure at 38 m max. Pump at 25% VFD — just enough to maintain tank level and fire-flow reserve.',trend:[28,35,38,38,37,36,35,28,25,22,20,22,24,25,26,27,28,29,30,32,33,34,36,35]}
+};
+const barC={ok:'#2DD4BF',warn:'#fbbf24',danger:'#f87171'};
+function buildTrend(data){
+  const c=document.getElementById('trend-bars');c.innerHTML='';
+  data.forEach(v=>{
+    const d=document.createElement('div');d.className='dm-tb';
+    d.style.height=Math.max(4,Math.round((v/50)*100))+'%';
+    d.style.background=v<10?'#f87171':v<15?'#fbbf24':'#38E1FF';
+    d.title=v+' m head';c.appendChild(d);
+  });
+}
+function setZone(id,d){
+  document.getElementById('zc-'+id).className='dm-zone '+d.c;
+  document.getElementById('zb-'+id).style.width=d.b+'%';
+  document.getElementById('zb-'+id).style.background=barC[d.c]||'#38E1FF';
+  document.getElementById('zh-'+id).textContent='Head: '+d.h+' m';
+  document.getElementById('zf-'+id).textContent=d.f+' L/s';
+  document.getElementById('zs-'+id).textContent=d.s;
+  document.getElementById('zs-'+id).className='dm-status '+d.sc;
+}
+function setLadder(steps){
+  for(let i=1;i<=5;i++){
+    const s=document.getElementById('ls'+i),n=document.getElementById('ln'+i);
+    s.className='dm-ladder-step';n.className='dm-ls-num';
+    if(steps.includes(i)){s.classList.add('active');n.classList.add('active');}
+  }
+}
+function setEvent(key,el){
+  document.querySelectorAll('.dm-trigger').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const e=evts[key];
+  const ab=document.getElementById('dm-alert');
+  if(e.al){ab.style.display='block';document.getElementById('al-title').textContent=e.aT+': ';document.getElementById('al-msg').textContent=e.aM;}
+  else ab.style.display='none';
+  setZone('a',e.za);setZone('b',e.zb);setZone('c',e.zc);
+  setLadder(e.steps);
+  document.getElementById('ev-insight').innerHTML=e.ins;
+  buildTrend(e.trend);
+}
+setEvent('normal',null);
+</script>
+</body>
+</html>

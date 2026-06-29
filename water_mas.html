@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Network · Multi-Agent Orchestration Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#070B12;--bg-2:#0A1019;--panel:#0E1622;--panel-2:#121C2B;
+  --line:#1E2C3F;--line-soft:#16212F;
+  --ink:#DCE6F2;--ink-dim:#7C8CA3;--ink-faint:#4A5970;
+  --cyan:#38E1FF;--teal:#2DE3C0;--green:#4ADE80;--amber:#FBBF24;
+  --rose:#FB5E6D;--violet:#A78BFA;
+  --orchestrator:#2DE3C0;
+  --a-hydro:  #38E1FF;
+  --a-energy: #2DE3C0;
+  --a-leak:   #FBBF24;
+  --a-control:#FB5E6D;
+  --chat-bg:#0A1117;--msg-out:#0B2A1E;--msg-out-line:#155E3A;--msg-in:#131E2B;
+  --radius:14px;--radius-sm:10px;--shadow:0 18px 50px -22px rgba(0,0,0,0.85);
+}
+*{box-sizing:border-box;}html,body{margin:0;}
+body{font-family:"Sora",-apple-system,sans-serif;color:var(--ink);min-height:100vh;padding:34px 28px 60px;
+  background:radial-gradient(1100px 600px at 12% -8%,rgba(45,227,192,0.07),transparent 60%),
+    radial-gradient(900px 620px at 92% 0%,rgba(56,225,255,0.06),transparent 58%),
+    radial-gradient(800px 700px at 50% 120%,rgba(45,227,192,0.05),transparent 60%),
+    linear-gradient(180deg,var(--bg),var(--bg-2));
+  background-attachment:fixed;display:flex;flex-direction:column;align-items:center;}
+body::before{content:"";position:fixed;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0;
+  mask-image:radial-gradient(circle at 50% 35%,#000 0%,transparent 78%);}
+.shell{width:1280px;max-width:100%;position:relative;z-index:1;}
+
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line-soft);}
+.brand{display:flex;align-items:center;gap:16px;}
+.glyph{width:46px;height:46px;border-radius:12px;background:linear-gradient(150deg,rgba(45,227,192,0.18),rgba(56,225,255,0.12));border:1px solid rgba(45,227,192,0.35);display:grid;place-items:center;box-shadow:inset 0 0 18px rgba(45,227,192,0.18),0 8px 22px -10px rgba(45,227,192,0.5);}
+.glyph svg{width:24px;height:24px;}
+.brand h1{font-family:"Space Grotesk",sans-serif;font-size:1.7rem;font-weight:700;margin:0;letter-spacing:-0.01em;line-height:1;background:linear-gradient(90deg,#F4FAFF,#9FE9DE 70%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.brand .tag{font-family:"IBM Plex Mono",monospace;font-size:0.74rem;letter-spacing:0.2em;text-transform:uppercase;color:#ffffff;margin-top:6px;}
+.masthead-right{text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.clock{font-family:"IBM Plex Mono",monospace;font-size:1.05rem;color:var(--ink);letter-spacing:0.04em;}
+.clock span{color:var(--ink-dim);}
+.health-pill{display:inline-flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:999px;border:1px solid rgba(45,227,192,0.3);color:var(--teal);background:rgba(45,227,192,0.06);}
+.health-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:breathe 2s ease-in-out infinite;}
+@keyframes breathe{50%{opacity:0.4;}}
+.workspace{display:flex;gap:18px;align-items:stretch;}
+.chat-panel{width:400px;flex-shrink:0;height:660px;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.chat-head{display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(180deg,#091A14,#061210);border-bottom:1px solid var(--line-soft);}
+.chat-avatar{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:linear-gradient(150deg,var(--teal),var(--cyan));display:grid;place-items:center;box-shadow:0 6px 16px -6px rgba(45,227,192,0.6);}
+.chat-avatar svg{width:22px;height:22px;}
+.chat-head h3{margin:0;font-family:"Space Grotesk",sans-serif;font-size:1rem;font-weight:600;color:#E0F5EE;}
+.chat-head .status{margin:3px 0 0;font-family:"IBM Plex Mono",monospace;font-size:0.7rem;color:var(--teal);display:flex;align-items:center;gap:5px;}
+.chat-head .status::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal);}
+.chat-area{flex:1;padding:18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;background:radial-gradient(rgba(255,255,255,0.025) 1px,transparent 0);background-size:20px 20px;background-color:var(--chat-bg);}
+.chat-area::-webkit-scrollbar{width:8px;}.chat-area::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+@keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.bubble{max-width:88%;padding:10px 13px;border-radius:14px;font-size:0.9rem;line-height:1.5;position:relative;word-wrap:break-word;animation:rise .35s cubic-bezier(.2,.8,.2,1);}
+.bubble-out{background:linear-gradient(180deg,var(--msg-out),#04140C);border:1px solid var(--msg-out-line);color:#C8F0E0;align-self:flex-end;border-bottom-right-radius:4px;}
+.bubble-in{background:var(--msg-in);border:1px solid var(--line);color:var(--ink);align-self:flex-start;border-bottom-left-radius:4px;max-width:94%;}
+.bubble .who{font-family:"IBM Plex Mono",monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--teal);margin-bottom:5px;}
+.bubble-time{font-family:"IBM Plex Mono",monospace;font-size:0.58rem;color:var(--ink-faint);margin-top:6px;text-align:right;}
+.agent-steps{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px;}
+.agent-line{display:flex;align-items:flex-start;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:0.74rem;opacity:0;animation:stepIn .3s forwards;}
+@keyframes stepIn{to{opacity:1;}}
+.agent-line .tag{display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:6px;font-size:0.62rem;letter-spacing:0.04em;white-space:nowrap;border:1px solid;}
+.agent-line .msg{color:var(--ink-dim);flex:1;padding-top:2px;}
+.agent-line .msg b{color:var(--ink);font-weight:500;}
+.agent-line .spin{width:12px;height:12px;flex-shrink:0;margin-top:3px;color:var(--amber);animation:spin 1s linear infinite;}
+.agent-line .check{width:12px;height:12px;flex-shrink:0;margin-top:3px;color:var(--green);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.tag-hydro  {color:var(--a-hydro);  border-color:rgba(56,225,255,0.4);  background:rgba(56,225,255,0.08);}
+.tag-energy {color:var(--a-energy); border-color:rgba(45,227,192,0.4);  background:rgba(45,227,192,0.08);}
+.tag-leak   {color:var(--a-leak);   border-color:rgba(251,191,36,0.4);  background:rgba(251,191,36,0.08);}
+.tag-control{color:var(--a-control);border-color:rgba(251,94,109,0.4);  background:rgba(251,94,109,0.08);}
+.verdict-box{margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(45,227,192,0.06);border:1px solid rgba(45,227,192,0.22);font-size:0.85rem;line-height:1.55;}
+.verdict-box b{color:var(--teal);}
+.typing{display:inline-flex;gap:4px;align-items:center;padding:12px 14px;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--ink-dim);animation:blink 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+.chat-input{display:flex;gap:10px;align-items:center;padding:12px 14px;background:linear-gradient(180deg,#061210,#040D0A);border-top:1px solid var(--line-soft);}
+.chat-input input{flex:1;font-family:"Sora",sans-serif;font-size:0.88rem;color:var(--ink);background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:11px 16px;outline:none;transition:border-color .2s;}
+.chat-input input:focus{border-color:var(--teal);}
+.chat-input input::placeholder{color:var(--ink-faint);}
+.send-btn{width:44px;height:44px;flex-shrink:0;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(150deg,var(--teal),var(--cyan));display:grid;place-items:center;transition:transform .15s;box-shadow:0 6px 16px -6px rgba(45,227,192,0.7);}
+.send-btn svg{width:18px;height:18px;color:#031A12;}
+.send-btn:hover:not(:disabled){transform:scale(1.06);}
+.send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.suggestions{display:flex;gap:7px;padding:0 14px 12px;flex-wrap:wrap;background:#040D0A;}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:0.66rem;color:var(--ink-dim);cursor:pointer;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2);transition:all .18s;}
+.chip:hover{border-color:var(--teal);color:var(--teal);}
+.canvas-frame{flex:1;position:relative;border-radius:var(--radius);padding:1px;background:linear-gradient(160deg,rgba(45,227,192,0.22),rgba(30,44,63,0.4) 40%,rgba(56,225,255,0.16));box-shadow:var(--shadow);}
+.canvas{position:relative;width:100%;height:660px;background:radial-gradient(540px 420px at 38% 44%,rgba(45,227,192,0.05),transparent 70%),linear-gradient(180deg,rgba(14,22,34,0.96),rgba(10,16,25,0.98));border-radius:calc(var(--radius) - 1px);overflow:hidden;}
+.canvas-label{position:absolute;top:14px;left:18px;font-family:"IBM Plex Mono",monospace;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:#ffffff;z-index:5;}
+.col-cap{position:absolute;font-family:"IBM Plex Mono",monospace;font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);z-index:5;top:15px;}
+.node{position:absolute;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;text-align:center;z-index:10;box-shadow:0 12px 30px -16px rgba(0,0,0,0.8);padding:12px 11px;transition:border-color .35s ease,box-shadow .35s ease,transform .35s ease;}
+.node .title{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:0.84rem;letter-spacing:0.01em;display:flex;align-items:center;gap:7px;}
+.node .ico{width:16px;height:16px;opacity:0.9;}
+.node .desc{font-family:"IBM Plex Mono",monospace;font-size:0.6rem;color:#ffffff;margin-top:4px;letter-spacing:0.03em;}
+.node .chip{margin-top:8px;font-family:"IBM Plex Mono",monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(124,140,163,0.12);color:var(--ink-dim);border:1px solid var(--line);transition:all .3s;}
+#node-user{top:295px;left:26px;width:132px;border-color:rgba(45,227,192,0.4);}
+#node-user .title{color:var(--teal);}
+#node-orch{top:285px;left:226px;width:188px;border-color:rgba(45,227,192,0.5);background:linear-gradient(180deg,#081E16,#051410);box-shadow:0 16px 40px -18px rgba(45,227,192,0.4),inset 0 0 30px rgba(45,227,192,0.05);}
+#node-orch .title{color:var(--orchestrator);font-size:0.92rem;}
+#node-orch .brain{margin-top:9px;display:flex;gap:4px;}
+#node-orch .brain i{width:6px;height:6px;border-radius:50%;background:rgba(45,227,192,0.4);display:inline-block;}
+.agent-node{width:196px;}
+#node-hydro  {top: 36px;right:180px;border-color:rgba(56,225,255,0.3);}
+#node-energy {top:196px;right:180px;border-color:rgba(45,227,192,0.3);}
+#node-leak   {top:356px;right:180px;border-color:rgba(251,191,36,0.3);}
+#node-control{top:516px;right:180px;border-color:rgba(251,94,109,0.3);}
+#node-hydro .title   {color:var(--a-hydro);}
+#node-energy .title  {color:var(--a-energy);}
+#node-leak .title    {color:var(--a-leak);}
+#node-control .title {color:var(--a-control);}
+.tool-node{width:124px;padding:9px 8px;}
+.tool-node .title{font-size:0.72rem;color:var(--ink-dim);}
+.tool-node .desc{font-size:0.54rem;}
+#tool-scada {top: 52px;right:20px;}
+#tool-tariff{top:212px;right:20px;}
+#tool-ml    {top:372px;right:20px;}
+#tool-mpc   {top:532px;right:20px;}
+.orch-active{border-color:var(--orchestrator) !important;box-shadow:0 0 34px -6px rgba(45,227,192,0.65) !important;transform:translateY(-2px);}
+.orch-active .brain i{background:var(--teal);box-shadow:0 0 6px var(--teal);animation:portblink 1s infinite;}
+.orch-active .brain i:nth-child(2){animation-delay:.2s;}.orch-active .brain i:nth-child(3){animation-delay:.4s;}
+@keyframes portblink{50%{opacity:.3;}}
+.agent-working{transform:translateY(-2px);}
+#node-hydro.agent-working   {border-color:var(--a-hydro)  !important;box-shadow:0 0 0 1px rgba(56,225,255,0.35),0 0 30px -6px rgba(56,225,255,0.55)  !important;}
+#node-energy.agent-working  {border-color:var(--a-energy) !important;box-shadow:0 0 0 1px rgba(45,227,192,0.35),0 0 30px -6px rgba(45,227,192,0.55) !important;}
+#node-leak.agent-working    {border-color:var(--a-leak)   !important;box-shadow:0 0 0 1px rgba(251,191,36,0.35),0 0 30px -6px rgba(251,191,36,0.55) !important;}
+#node-control.agent-working {border-color:var(--a-control)!important;box-shadow:0 0 0 1px rgba(251,94,109,0.35),0 0 30px -6px rgba(251,94,109,0.55)!important;}
+#node-hydro.agent-working .chip   {background:rgba(56,225,255,0.14);color:var(--a-hydro);border-color:rgba(56,225,255,0.4);}
+#node-energy.agent-working .chip  {background:rgba(45,227,192,0.14);color:var(--a-energy);border-color:rgba(45,227,192,0.4);}
+#node-leak.agent-working .chip    {background:rgba(251,191,36,0.14);color:var(--a-leak);border-color:rgba(251,191,36,0.4);}
+#node-control.agent-working .chip {background:rgba(251,94,109,0.14);color:var(--a-control);border-color:rgba(251,94,109,0.4);}
+.agent-done .chip{background:rgba(74,222,128,0.14) !important;color:var(--green) !important;border-color:rgba(74,222,128,0.4) !important;}
+.tool-active{border-color:var(--ink-dim) !important;box-shadow:0 0 20px -8px rgba(255,255,255,0.3) !important;}
+svg.links{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;}
+svg.links path{stroke:var(--line);stroke-width:1.6;fill:none;}
+svg.links path.trunk{stroke:rgba(45,227,192,0.35);stroke-width:2.4;}
+.packet{position:absolute;width:11px;height:11px;border-radius:50%;z-index:20;}
+.deck{display:grid;grid-template-columns:400px 1fr;gap:18px;margin-top:18px;}
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
+.info-card{padding:16px 18px;}
+.info-card .lead{font-family:"IBM Plex Mono",monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);}
+.info-card p{font-size:0.84rem;color:var(--ink-dim);line-height:1.55;margin:10px 0 14px;}
+.info-card .stats{display:flex;gap:16px;flex-wrap:wrap;}
+.info-card .stats .s{font-size:0.72rem;color:var(--ink-dim);}
+.info-card .stats .s b{display:block;font-family:"Space Grotesk",sans-serif;font-size:1.35rem;color:var(--ink);font-weight:700;}
+.ghost-btn{margin-top:14px;font-family:"Sora",sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg-2);color:var(--ink);transition:all .2s;}
+.ghost-btn:hover{border-color:var(--ink-dim);transform:translateY(-1px);}
+.terminal{padding:14px 16px;height:100%;min-height:188px;overflow-y:auto;font-family:"IBM Plex Mono",monospace;font-size:0.78rem;line-height:1.7;color:var(--teal);background:linear-gradient(180deg,#05080D,#04060A);border-radius:var(--radius);}
+.terminal::-webkit-scrollbar{width:8px;}.terminal::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+.term-head{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:#ffffff;font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;}
+.term-head .dots{display:flex;gap:5px;}.term-head .dots i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.log-entry{margin-bottom:3px;}.log-time{color:var(--ink-faint);margin-right:8px;}
+@media(max-width:1320px){.shell{width:100%;}.workspace{flex-direction:column;}.chat-panel{width:100%;}.deck{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <div class="brand">
+      <div class="glyph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#9FE9DE" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2c0 0-6 4-6 10a6 6 0 0 0 12 0c0-6-6-10-6-10z"/>
+          <path d="M8 16s1-3 4-3 4 3 4 3"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Water Network Orchestration Console</h1>
+        <div class="tag">Multi-Agent Distribution Intelligence · DeepManthan AI</div>
+      </div>
+    </div>
+    <div class="masthead-right">
+      <div class="clock" id="clock"><span>UTC+05:30</span> 00:00:00</div>
+      <div class="health-pill"><span class="dot"></span> Supervisor + 4 Specialist Agents</div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <div class="chat-panel">
+      <div class="chat-head">
+        <div class="chat-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#031A12" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="19" cy="18" r="2.2"/><path d="M12 7.2v3.3M10.4 12 6.4 16M13.6 12l4 4"/></svg>
+        </div>
+        <div>
+          <h3>Network Supervisor</h3>
+          <div class="status">Orchestrator agent online</div>
+        </div>
+      </div>
+      <div class="chat-area" id="chat-scroller">
+        <div class="bubble bubble-in">
+          <div class="who">Supervisor</div>
+          I coordinate four specialist agents — Hydraulics, Energy, Leak Detection, and MPC Control. Ask me about network pressure, pump performance, suspected leaks, or tariff scheduling and I'll delegate to the right agents in parallel.
+        </div>
+      </div>
+      <div class="chat-input">
+        <input id="chat-text" type="text" placeholder="Ask about the water network…" autocomplete="off"/>
+        <button class="send-btn" id="btn-send" onclick="handleSend()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+        </button>
+      </div>
+      <div class="suggestions">
+        <span class="chip" onclick="useSuggestion(this)">Is there a leak in Zone B? Analyse pressure anomalies</span>
+        <span class="chip" onclick="useSuggestion(this)">Optimise pump schedule for tonight's off-peak window</span>
+        <span class="chip" onclick="useSuggestion(this)">Why has Zone C pressure dropped below 15m?</span>
+      </div>
+    </div>
+
+    <div class="canvas-frame">
+      <div class="canvas" id="canvas-container">
+        <div class="canvas-label">Multi-Agent Orchestration · Live Delegation Trace</div>
+        <span class="col-cap" style="right:230px;">Specialist Agents</span>
+        <span class="col-cap" style="right:72px;">Tools</span>
+
+        <svg class="links" id="links">
+          <path id="path-user-orch" class="trunk" d="M 158 326 L 226 326"/>
+          <path id="path-orch-hydro"   d="M 414 310 L 470 310 L 470 84  L 560 84"/>
+          <path id="path-orch-energy"  d="M 414 320 L 480 320 L 480 244 L 560 244"/>
+          <path id="path-orch-leak"    d="M 414 330 L 480 330 L 480 404 L 560 404"/>
+          <path id="path-orch-control" d="M 414 340 L 470 340 L 470 564 L 560 564"/>
+          <path id="path-hydro-tool"   d="M 752 84  L 838 84"/>
+          <path id="path-energy-tool"  d="M 752 244 L 838 244"/>
+          <path id="path-leak-tool"    d="M 752 404 L 838 404"/>
+          <path id="path-control-tool" d="M 752 564 L 838 564"/>
+        </svg>
+
+        <div class="node" id="node-user">
+          <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Operator</div>
+          <div class="desc">Network Query</div>
+        </div>
+        <div class="node" id="node-orch">
+          <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="19" cy="18" r="2.2"/><path d="M12 7.2v3.3M10.4 12 6.4 16M13.6 12l4 4"/></svg>Supervisor</div>
+          <div class="desc">Planner · Delegator · Synthesizer</div>
+          <div class="brain"><i></i><i></i><i></i></div>
+        </div>
+
+        <div class="node agent-node" id="node-hydro">
+          <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2c0 0-6 4-6 10a6 6 0 0 0 12 0c0-6-6-10-6-10z"/></svg>Hydraulics Agent</div>
+          <div class="desc">Pressure · flow · HGL</div>
+          <div class="chip" id="chip-hydro">IDLE</div>
+        </div>
+        <div class="node agent-node" id="node-energy">
+          <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>Energy Agent</div>
+          <div class="desc">kWh/m³ · tariff · VFD</div>
+          <div class="chip" id="chip-energy">IDLE</div>
+        </div>
+        <div class="node agent-node" id="node-leak">
+          <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12h4l3-8 4 16 3-8h4"/></svg>Leak Detection Agent</div>
+          <div class="desc">Anomaly · NRW · location</div>
+          <div class="chip" id="chip-leak">IDLE</div>
+        </div>
+        <div class="node agent-node" id="node-control">
+          <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>MPC Control Agent</div>
+          <div class="desc">Pump schedule · PRV setpoints</div>
+          <div class="chip" id="chip-control">IDLE</div>
+        </div>
+
+        <div class="node tool-node" id="tool-scada"><div class="title">Pressure SCADA</div><div class="desc">Node sensor feeds</div></div>
+        <div class="node tool-node" id="tool-tariff"><div class="title">Tariff API</div><div class="desc">MSEDCL TOD rates</div></div>
+        <div class="node tool-node" id="tool-ml"><div class="title">ML Anomaly</div><div class="desc">Hazen-Williams model</div></div>
+        <div class="node tool-node" id="tool-mpc"><div class="title">MPC Solver</div><div class="desc">24h pump optimiser</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="panel info-card">
+      <div class="lead">How the team works</div>
+      <p>The Supervisor decomposes your query and delegates to specialist agents in parallel — each calling its own network tools. Their findings flow back and the Supervisor synthesizes one consolidated network assessment.</p>
+      <div class="stats">
+        <div class="s">queries<b id="stat-tasks">0</b></div>
+        <div class="s">agents fired<b id="stat-agents">0</b></div>
+        <div class="s">tool calls<b id="stat-tools">0</b></div>
+        <div class="s">avg latency<b id="stat-latency">—</b></div>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">Clear conversation</button>
+    </div>
+    <div class="panel terminal" id="terminal-screen">
+      <div class="term-head"><span class="dots"><i style="background:var(--rose)"></i><i style="background:var(--amber)"></i><i style="background:var(--green)"></i></span> orchestration trace · water-swarm.log</div>
+      <div class="log-entry"><span class="log-time">[SYSTEM]</span> <span style="color:var(--teal)">Supervisor bound · 4 specialist agents registered · SCADA + MPC tool registry loaded.</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const logScreen=document.getElementById('terminal-screen');
+const canvas=document.getElementById('canvas-container');
+const chatScroller=document.getElementById('chat-scroller');
+const sendBtn=document.getElementById('btn-send');
+const input=document.getElementById('chat-text');
+let busy=false,taskCount=0,agentFires=0,toolCalls=0;
+
+const AGENTS={
+  hydro:  {name:"Hydraulics Agent",   tagClass:"tag-hydro",  node:"node-hydro",  chip:"chip-hydro",  tool:"tool-scada", toolPath:"path-hydro-tool",   orchPath:"path-orch-hydro",   color:"var(--a-hydro)"},
+  energy: {name:"Energy Agent",       tagClass:"tag-energy", node:"node-energy", chip:"chip-energy", tool:"tool-tariff",toolPath:"path-energy-tool",  orchPath:"path-orch-energy",  color:"var(--a-energy)"},
+  leak:   {name:"Leak Detection Agent",tagClass:"tag-leak",  node:"node-leak",   chip:"chip-leak",   tool:"tool-ml",    toolPath:"path-leak-tool",    orchPath:"path-orch-leak",    color:"var(--a-leak)"},
+  control:{name:"MPC Control Agent",  tagClass:"tag-control",node:"node-control",chip:"chip-control",tool:"tool-mpc",   toolPath:"path-control-tool", orchPath:"path-orch-control", color:"var(--a-control)"},
+};
+
+setInterval(()=>{const d=new Date();document.getElementById('clock').innerHTML='<span>UTC+05:30</span> '+d.toTimeString().split(' ')[0];},1000);
+function nowTime(){const d=new Date();return d.toTimeString().split(' ')[0]+'.'+String(d.getMilliseconds()).padStart(3,'0');}
+function clockShort(){const d=new Date();return d.toTimeString().slice(0,5);}
+function appendLog(msg,color="var(--teal)"){const e=document.createElement('div');e.className="log-entry";e.innerHTML=`<span class="log-time">[${nowTime()}]</span> <span style="color:${color}">${msg}</span>`;logScreen.appendChild(e);logScreen.scrollTop=logScreen.scrollHeight;}
+function scrollChat(){chatScroller.scrollTop=chatScroller.scrollHeight;}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function packet(pathId,dur,color,reverse,cb){const path=document.getElementById(pathId);if(!path){if(cb)cb();return;}const len=path.getTotalLength();const p=document.createElement('div');p.className='packet';p.style.backgroundColor=color;p.style.boxShadow=`0 0 12px ${color},0 0 4px ${color}`;canvas.appendChild(p);let s=null;function step(ts){if(!s)s=ts;let pr=(ts-s)/dur;if(pr>1)pr=1;const t=reverse?len*(1-pr):len*pr;const pt=path.getPointAtLength(t);p.style.left=(pt.x-5.5)+'px';p.style.top=(pt.y-5.5)+'px';if(pr<1)requestAnimationFrame(step);else{p.remove();if(cb)cb();}}requestAnimationFrame(step);}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function packetAsync(pathId,dur,color,reverse){return new Promise(res=>packet(pathId,dur,color,reverse,res));}
+function userBubble(text){const b=document.createElement('div');b.className="bubble bubble-out";b.innerHTML=`${esc(text)}<div class="bubble-time">${clockShort()}</div>`;chatScroller.appendChild(b);scrollChat();}
+function typingBubble(){const b=document.createElement('div');b.className="bubble bubble-in";b.innerHTML=`<div class="typing"><span></span><span></span><span></span></div>`;chatScroller.appendChild(b);scrollChat();return b;}
+function handleSend(){if(busy)return;const t=input.value.trim();if(!t)return;input.value="";runOrchestration(t);}
+input.addEventListener('keydown',e=>{if(e.key==='Enter')handleSend();});
+function useSuggestion(el){input.value=el.innerText;handleSend();}
+
+const WATER_RESPONSES={
+  leak:{
+    hydro:  {step:"queried SCADA for Zone B nodal pressures",     result:"Node B-7: 14.2m (model predicted 22m) · Δ = −7.8m · sustained 28min"},
+    energy: {step:"checked pump power vs flow correlation",       result:"Pump VFD at 82% but flow meter reading 8.4% below expected · energy loss ~6.2 kWh/hr"},
+    leak:   {step:"ran Hazen-Williams anomaly localisation",      result:"Leak probable on DN300 segment B-7→B-12 · estimated 85 L/min · NRW +4.1%"},
+    control:{step:"modelled isolation + re-routing options",      result:"PRV Zone B setpoint reduce 30→22m · activate standby feed from Zone A · total water saved: 122 m³/day"},
+    verdict:`<b>Zone B leak confirmed</b> with 94% confidence.<br><br>
+<b>Location:</b> DN300 main between nodes B-7 and B-12, approximately 200m section near the industrial junction. Pressure differential of 7.8m sustained for 28 minutes matches a leak of ~85 L/min.<br><br>
+<b>Impact:</b> 122 m³/day unaccounted water · ₹2,440/day pumping cost wasted · NRW up 4.1%.<br><br>
+<b>Recommended actions:</b> (1) Dispatch field crew to B-7→B-12 segment. (2) Reduce Zone B PRV setpoint to 22m to limit outflow. (3) Activate Zone A standby feed to maintain consumer pressure during repair.`
+  },
+  pump:{
+    hydro:  {step:"verified tank level and network pressures",    result:"Tank: 42% · Zone A: 26m ✓ · Zone B: 20m ✓ · Zone C: 16m (marginal)"},
+    energy: {step:"fetched MSEDCL TOD tariff schedule + forecast",result:"Tonight 10 PM–6 AM: ₹3.2/kWh · Peak 5–10 PM: ₹8.1/kWh · Optimal fill window: 10 PM–4 AM"},
+    leak:   {step:"confirmed no active anomalies pre-scheduling", result:"All zone pressures within model bounds · no anomalies detected · NRW baseline normal"},
+    control:{step:"ran MPC 24h optimisation for pump schedule",   result:"Optimal: 10 PM 90% VFD, taper to 60% at 4 AM · coast 7–10 AM + 5–10 PM · projected saving ₹9,840"},
+    verdict:`<b>Optimised pump schedule for tonight computed.</b><br><br>
+<b>10 PM – 4 AM (Off-peak ₹3.2/kWh):</b> Pump at 90% VFD. Tank target: 88% by 6 AM. This pre-loads the tank to coast through both morning and evening peak windows.<br><br>
+<b>7 AM – 10 AM (Peak ₹8.1/kWh):</b> Drop to 12% VFD. Coast entirely on tank gravity supply. Estimated tank draw-down: 28%.<br><br>
+<b>5 PM – 10 PM (Peak ₹8.1/kWh):</b> Drop to 10% VFD. Tank buffer should be ≥40% before this window.<br><br>
+<b>Projected saving vs. reactive scheduling: ₹9,840 tonight</b> · 38% energy cost reduction · specific energy target: 0.36 kWh/m³.`
+  },
+  pressure:{
+    hydro:  {step:"pulled all Zone C sensor feeds via SCADA",      result:"Zone C: 14.8m current vs 18m normal · Node C-4 lowest at 12.1m · declining since 14:30"},
+    energy: {step:"checked pump operation during pressure drop",   result:"Pump VFD at 75% as scheduled · no pump fault · tank at 38% — tank draw accelerating"},
+    leak:   {step:"ran anomaly detection on Zone C segment",      result:"No statistically significant leak signature · pressure drop correlates with demand surge +34%"},
+    control:{step:"modelled pressure recovery options",            result:"Option A: raise pump VFD 75%→88% recovers head in 12min (+₹340/hr) · Option B: open PRV bypass (faster, no cost)"},
+    verdict:`<b>Zone C pressure drop is demand-driven, not a leak.</b><br><br>
+The Hydraulics Agent confirmed Zone C head at 14.8m (floor: 10m). The Leak Detection Agent found no anomaly signature — pressure drops uniformly across Zone C rather than creating the localised gradient a leak would show.<br><br>
+<b>Root cause:</b> Unexpectedly high industrial demand (+34% above ML forecast) this afternoon, likely due to the Mahindra plant running an extra production shift. Tank is at 38% and drawing down faster than expected.<br><br>
+<b>Immediate action:</b> Open PRV bypass to Zone C (no energy cost, restores pressure in 4 min). <b>Medium-term:</b> raise pump VFD from 75% to 88% to accelerate tank refill before this evening's peak window.`
+  }
+};
+
+function pickResponse(text){
+  if(/leak|anomal|burst|pressure.drop|zone.b/i.test(text)) return WATER_RESPONSES.leak;
+  if(/pump|schedul|off.peak|tariff|tonight|optim/i.test(text)) return WATER_RESPONSES.pump;
+  return WATER_RESPONSES.pressure;
+}
+
+async function runOrchestration(text){
+  busy=true;sendBtn.disabled=true;input.blur();
+  const t0=performance.now();
+  userBubble(text);
+  taskCount++;document.getElementById('stat-tasks').innerText=taskCount;
+  const data=pickResponse(text);
+  appendLog(`[supervisor] received query · decomposing into network sub-tasks…`,"var(--teal)");
+  const think=typingBubble();
+  const orch=document.getElementById('node-orch');
+  await packetAsync('path-user-orch',1000,"var(--teal)",false);
+  orch.classList.add('orch-active');
+  await delay(500);
+  const planned=['hydro','energy','leak','control'];
+  think.innerHTML=`<div class="who">Supervisor</div>
+    <div>Query understood. Delegating to specialist agents in parallel:</div>
+    <div class="agent-steps" id="plan"></div>`;
+  const plan=think.querySelector('#plan');scrollChat();
+  appendLog(`[supervisor] plan ready · dispatching ${planned.length} agents in parallel.`,"var(--teal)");
+  const planLines={};
+  for(const key of planned){
+    const a=AGENTS[key];const line=document.createElement('div');line.className="agent-line";
+    line.innerHTML=`<span class="tag ${a.tagClass}">${a.name}</span>
+      <span class="msg">dispatching…</span>
+      <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg>`;
+    plan.appendChild(line);planLines[key]=line;scrollChat();
+  }
+  planned.forEach(key=>{packet(AGENTS[key].orchPath,900,AGENTS[key].color,false,null);});
+  await delay(950);
+  for(const key of planned){
+    const a=AGENTS[key];const d=data[key];
+    const node=document.getElementById(a.node);const chip=document.getElementById(a.chip);
+    const line=planLines[key];const msg=line.querySelector('.msg');
+    node.classList.add('agent-working');agentFires++;document.getElementById('stat-agents').innerText=agentFires;
+    chip.innerText="WORKING";
+    document.getElementById(a.tool).classList.add('tool-active');
+    appendLog(`[${key}] invoking tool ▸ ${document.getElementById(a.tool).querySelector('.title').innerText}…`,a.color);
+    toolCalls++;document.getElementById('stat-tools').innerText=toolCalls;
+    await packetAsync(a.toolPath,700,a.color,false);await delay(250);
+    await packetAsync(a.toolPath,700,a.color,true);
+    document.getElementById(a.tool).classList.remove('tool-active');
+    msg.innerHTML=`${d.step} → <b>${d.result.split('·')[0].trim()}</b>`;
+    appendLog(`[${key}] result ▸ ${d.result}`,a.color);
+    await packetAsync(a.orchPath,800,"var(--green)",true);
+    node.classList.remove('agent-working');node.classList.add('agent-done');chip.innerText="DONE";
+    line.querySelector('.spin').outerHTML=`<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>`;
+    scrollChat();
+  }
+  orch.classList.remove('orch-active');
+  await delay(400);
+  const ms=Math.round(performance.now()-t0);
+  document.getElementById('stat-latency').innerText=(ms/1000).toFixed(1)+'s';
+  appendLog(`[supervisor] all agents reported · synthesizing verdict…`,"var(--teal)");
+  await delay(600);
+  const final=document.createElement('div');final.className="bubble bubble-in";
+  final.innerHTML=`<div class="who">Supervisor — Consolidated Assessment</div>
+    <div class="verdict-box">${data.verdict}</div>
+    <div class="bubble-time">${clockShort()} · ${ms}ms · 4 agents · 4 tool calls</div>`;
+  chatScroller.appendChild(final);scrollChat();
+  appendLog(`[supervisor] assessment delivered · ${ms}ms total orchestration time.`,"var(--green)");
+  Object.values(AGENTS).forEach(a=>{document.getElementById(a.node).classList.remove('agent-done');document.getElementById(a.chip).innerText="IDLE";});
+  busy=false;sendBtn.disabled=false;
+}
+
+function clearChat(){
+  chatScroller.innerHTML=`<div class="bubble bubble-in"><div class="who">Supervisor</div>Conversation cleared. Ask me about network pressure, leaks, pump scheduling, or zone health and I'll coordinate the agent team.</div>`;
+  appendLog("conversation purged · agents reset to idle.","var(--ink-dim)");scrollChat();
+}
+</script>
+</body>
+</html>

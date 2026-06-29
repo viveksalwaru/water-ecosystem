@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepManthan AI — Water Distribution Network Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(135deg, #070B12 0%, #0A0F1A 100%);
+      color: #DCE6F2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      text-align: center;
+      padding: 60px 40px 40px;
+      border-bottom: 1px solid rgba(56, 225, 255, 0.2);
+      background: rgba(10, 15, 26, 0.8);
+    }
+
+    .company-name {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #38E1FF, #2DD4BF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      font-size: 1.2rem;
+      color: #A0D8FF;
+      margin-bottom: 0;
+      font-weight: 400;
+    }
+
+    .container {
+      flex: 1;
+      padding: 30px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .suite-title {
+      font-size: 2.2rem;
+      color: #38E1FF;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .description {
+      text-align: center;
+      color: #A0D8FF;
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    /* ── Desktop notice ── */
+    .desktop-note {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 700px;
+      margin: 0 auto 30px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, rgba(255,180,84,0.14), rgba(255,180,84,0.06));
+      border: 1px solid rgba(255,180,84,0.55);
+      border-radius: 10px;
+      color: #FFD9A0;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      box-shadow: 0 0 18px rgba(255,180,84,0.15);
+    }
+    .desktop-note strong { color: #FFB454; }
+    .desktop-note-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+    /* ── Wide card (Start here / Billing) ── */
+    .wide-card {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-top: 10px;
+      padding: 26px 30px;
+      background: linear-gradient(135deg, rgba(56,225,255,0.12), rgba(45,212,191,0.06));
+      border: 1px solid rgba(56,225,255,0.35);
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .wide-card:hover {
+      border-color: #38E1FF;
+      box-shadow: 0 0 22px rgba(56,225,255,0.25);
+      transform: translateY(-3px);
+    }
+    .wide-icon { font-size: 2.6rem; flex-shrink: 0; }
+    .wide-text { flex: 1; min-width: 0; }
+    .wide-title { font-size: 1.3rem; color: #38E1FF; font-weight: 600; margin-bottom: 6px; }
+    .wide-desc { color: #A0D8FF; font-size: 0.95rem; line-height: 1.5; }
+    .wide-cta {
+      flex-shrink: 0;
+      color: #38E1FF;
+      font-weight: 600;
+      border: 1px solid #38E1FF;
+      border-radius: 6px;
+      padding: 10px 20px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    .wide-card:hover .wide-cta { background: #38E1FF; color: #070B12; }
+
+    /* ── Section labels ── */
+    .section-label {
+      text-align: center;
+      color: #38E1FF;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 44px 0 6px;
+    }
+    .section-sub {
+      text-align: center;
+      color: #A0D8FF;
+      font-size: 0.98rem;
+      margin-bottom: 24px;
+    }
+
+    /* ── Emulator grid cards ── */
+    .emulators {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+
+    .emulator-card {
+      background: linear-gradient(135deg, rgba(56,225,255,0.1), rgba(45,212,191,0.05));
+      border: 1px solid rgba(56,225,255,0.3);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .emulator-card:hover {
+      border-color: #38E1FF;
+      box-shadow: 0 0 20px rgba(56,225,255,0.3);
+      transform: translateY(-5px);
+    }
+    .emulator-icon { font-size: 3rem; margin-bottom: 15px; }
+    .emulator-title {
+      font-size: 1.3rem;
+      color: #38E1FF;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .emulator-desc {
+      color: #A0D8FF;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    .emulator-link {
+      color: #38E1FF;
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 1px solid #38E1FF;
+      border-radius: 6px;
+      display: inline-block;
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+    .emulator-link:hover { background: #38E1FF; color: #070B12; }
+
+    /* ── Help section ── */
+    .help-section {
+      max-width: 900px;
+      margin: -20px auto 60px;
+      padding: 0 40px;
+      width: 100%;
+    }
+    .help-note {
+      background: linear-gradient(135deg, rgba(56,225,255,0.08), rgba(45,212,191,0.05));
+      border: 1px solid rgba(56,225,255,0.3);
+      border-radius: 10px;
+      padding: 24px;
+      color: #A0D8FF;
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+    .help-note strong { color: #38E1FF; font-weight: 600; }
+    .help-note-title {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .help-note-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .shortcut-item {
+      background: rgba(56,225,255,0.05);
+      padding: 10px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #38E1FF;
+    }
+    .shortcut-label { font-size: 0.85rem; color: #2DD4BF; display: block; margin-bottom: 4px; font-weight: 500; }
+    .shortcut-keys { font-family: 'IBM Plex Mono', monospace; color: #38E1FF; font-weight: 600; font-size: 0.9rem; }
+    .help-note-subtitle { margin-top: 12px; font-size: 0.9rem; color: #7DD3C0; }
+
+    /* ── Footer ── */
+    .footer {
+      background: rgba(10, 15, 26, 0.95);
+      border-top: 1px solid rgba(56, 225, 255, 0.2);
+      padding: 50px 40px;
+      text-align: center;
+    }
+    .founder-info { max-width: 600px; margin: 0 auto; }
+    .founder-name { font-size: 1.3rem; color: #38E1FF; margin-bottom: 8px; font-weight: 600; }
+    .founder-title { font-size: 1rem; color: #2DD4BF; margin-bottom: 20px; font-weight: 500; }
+    .contact-info { margin: 20px 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem; color: #A0D8FF; }
+    .contact-item { margin: 8px 0; }
+    .contact-links { margin-top: 20px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .contact-link { color: #38E1FF; text-decoration: none; transition: color 0.3s ease; font-size: 0.95rem; }
+    .contact-link:hover { color: #2DD4BF; text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .wide-card { flex-direction: column; text-align: center; gap: 14px; }
+    }
+    @media (max-width: 768px) {
+      .company-name { font-size: 2rem; }
+      .suite-title { font-size: 1.5rem; }
+      .container { padding: 40px 20px; }
+      .header { padding: 40px 20px 30px; }
+      .footer { padding: 40px 20px; }
+      .help-section { padding: 0 20px 40px; }
+      .help-note { padding: 16px; }
+      .help-note-shortcuts { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="company-name">DeepManthan AI</div>
+    <div class="tagline">Water Distribution Network Intelligence</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="suite-title">Water Distribution Network Workflow Visualization</div>
+    <div class="description">
+      Interactive, animated simulations that explain how a city water network really works —
+      from pipe hydraulics and pump physics to live pressure zones, AI-driven pump scheduling,
+      tariff optimization, and ML-powered leak detection.
+    </div>
+
+    <!-- Desktop notice -->
+    <div class="desktop-note">
+      <span class="desktop-note-icon">🖥️</span>
+      <span><strong>Desktop viewing only.</strong> For the best experience, please open this suite on a laptop or desktop. The interactive simulators are not optimized for mobile screens.</span>
+    </div>
+
+    <!-- Start here — wide card -->
+    <a href="water_concepts.html" class="wide-card">
+      <div class="wide-icon">📘</div>
+      <div class="wide-text">
+        <div class="wide-title">Start here — Concepts &amp; Terminology</div>
+        <div class="wide-desc">Plain-language reference for flow rate, head pressure, Hazen-Williams friction equation, pump affinity laws, hydraulic grade line, and where the energy goes — with a live friction calculator and pump-speed explorer. The best place to begin.</div>
+      </div>
+      <div class="wide-cta">Open Reference →</div>
+    </a>
+
+    <!-- Interactive Simulators -->
+    <div class="section-label">Interactive Simulators</div>
+    <div class="section-sub">Watch the network work, then drive it yourself.</div>
+    <div class="emulators">
+      <div class="emulator-card">
+        <div class="emulator-icon">💧</div>
+        <div class="emulator-title">How a Water Network Works</div>
+        <div class="emulator-desc">
+          Animated flow diagram of every component — reservoir, pump station, elevated tank, trunk mains, PRV, and consumer zones — with head pressure shown live at each node. Switch demand scenarios.
+        </div>
+        <a href="water_animation.html" class="emulator-link">View Animation →</a>
+      </div>
+
+      <div class="emulator-card">
+        <div class="emulator-icon">⚡</div>
+        <div class="emulator-title">Pump Scheduling Simulator</div>
+        <div class="emulator-desc">
+          Live 24-hour MPC pump schedule. Drag through the day and watch the AI shift pumping to off-peak tariff windows, pre-fill the elevated tank overnight, and avoid peak-hour costs.
+        </div>
+        <a href="pump_scheduler.html" class="emulator-link">Launch Simulator →</a>
+      </div>
+
+      <div class="emulator-card">
+        <div class="emulator-icon">🔄</div>
+        <div class="emulator-title">Pressure Zone Control</div>
+        <div class="emulator-desc">
+          A self-controlling network that fights back. Trigger a demand spike, main burst, or slow leak and watch the AI escalation ladder — PRV → pump speed → zone isolation — respond in real time.
+        </div>
+        <a href="pressure_zones.html" class="emulator-link">Run the Network →</a>
+      </div>
+
+      <div class="emulator-card">
+        <div class="emulator-icon">💬</div>
+        <div class="emulator-title">Network Operations Assistant</div>
+        <div class="emulator-desc">
+          Ask the network questions in plain English. 60+ operator queries — pumps, pipes, tanks, leaks, energy and AI reasoning — each answered against one live network scenario. Filterable and click-to-expand.
+        </div>
+        <a href="water_assistant.html" class="emulator-link">Open Assistant →</a>
+      </div>
+    </div>
+
+    <!-- Network Health Monitoring -->
+    <div class="section-label">Network Health Monitoring</div>
+    <div class="section-sub">Spot the symptoms of a network whose health is slipping.</div>
+    <div class="emulators">
+      <div class="emulator-card">
+        <div class="emulator-icon">🌡️</div>
+        <div class="emulator-title">Pressure Anomaly Monitor</div>
+        <div class="emulator-desc">
+          The flagship network-health symptom. Induce a pipe leak or burst and watch nodal pressures slide from healthy into fault, with a live 24-hour trend and ML leak-location readout.
+        </div>
+        <a href="pressure_zones.html" class="emulator-link">Open Monitor →</a>
+      </div>
+
+      <div class="emulator-card">
+        <div class="emulator-icon">🌦️</div>
+        <div class="emulator-title">Two Triggers: Demand + Aging</div>
+        <div class="emulator-desc">
+          Seasonal demand surge and aging pipe roughness shown together — see how each degrades a different signal, and why high summer demand is not the same symptom as a slow leak.
+        </div>
+        <a href="pump_scheduler.html" class="emulator-link">Open Dashboard →</a>
+      </div>
+    </div>
+
+    <!-- Energy & Billing -->
+    <div class="section-label">Energy &amp; Billing</div>
+    <div class="section-sub">Where the pump station meets the electricity board.</div>
+    <a href="pump_scheduler.html#billing" class="wide-card">
+      <div class="wide-icon">🔌</div>
+      <div class="wide-text">
+        <div class="wide-title">Pump Station &amp; the Electricity Board</div>
+        <div class="wide-desc">A real MSEDCL industrial HT tariff decoded — contract demand, kVAh billing, TOD surcharges, and power factor penalty — showing how every pump scheduling decision lands on a monthly electricity invoice.</div>
+      </div>
+      <div class="wide-cta">Open Breakdown →</div>
+    </a>
+  </div>
+
+  <!-- Help / Font Size Section -->
+  <div class="help-section">
+    <div class="help-note">
+      <div class="help-note-title">
+        <span>💡</span> <strong>Font Size Adjustment</strong>
+      </div>
+      <div class="help-note-shortcuts">
+        <div class="shortcut-item">
+          <span class="shortcut-label">🍎 Mac Users</span>
+          <span class="shortcut-keys">Command + / −</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">🪟 Windows Users</span>
+          <span class="shortcut-keys">Ctrl + / −</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">🐧 Linux Users</span>
+          <span class="shortcut-keys">Ctrl + / −</span>
+        </div>
+      </div>
+      <p class="help-note-subtitle">Use these keyboard shortcuts to zoom in and out of the simulators for comfortable viewing.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="founder-info">
+      <div class="founder-name">Vivek Salwaru</div>
+      <div class="founder-title">Founder, DeepManthan AI</div>
+      <div class="contact-info">
+        <div class="contact-item">Water Network AI · Pune, India</div>
+        <div class="contact-item">deepmanthan.ai</div>
+      </div>
+      <div class="contact-links">
+        <a href="https://viveksalwaru.github.io/hvac-ecosystem/index.html" class="contact-link">HVAC Suite →</a>
+        <a href="water_concepts.html" class="contact-link">Concepts →</a>
+        <a href="water_animation.html" class="contact-link">Animation →</a>
+        <a href="pump_scheduler.html" class="contact-link">Scheduler →</a>
+        <a href="pressure_zones.html" class="contact-link">Zones →</a>
+        <a href="water_assistant.html" class="contact-link">Assistant →</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

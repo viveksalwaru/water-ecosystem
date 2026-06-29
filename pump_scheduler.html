@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Network — Pump Scheduling Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="dm-nav">
+  <span class="dm-nav-brand">DeepManthan AI</span>
+  <span class="dm-nav-sep">|</span>
+  <a href="index.html">← Back to hub</a>
+</div>
+
+<div class="dm-page-header">
+  <div class="dm-eyebrow">Interactive Simulator</div>
+  <h1>Pump scheduling simulator</h1>
+  <p>Watch how MPC shifts pumping to off-peak tariff windows, pre-fills the elevated tank overnight, and avoids peak-hour electricity costs — saving 25–40% on pump energy.</p>
+</div>
+
+<div class="dm-container">
+
+  <div class="dm-kpi-row" style="margin-top:4px;">
+    <div class="dm-kpi"><div class="kl">Electricity tariff</div><div class="kv" id="k-tariff" style="font-size:1.05rem;">Off-peak</div><div class="ks" id="k-rate">₹3.2/kWh · pump now</div></div>
+    <div class="dm-kpi cyan"><div class="kl">Tank level</div><div class="kv" id="k-tank">72%</div><div class="ks" id="k-tank-sub">Rising · 3 h reserve</div></div>
+    <div class="dm-kpi"><div class="kl">Pump speed (VFD)</div><div class="kv" id="k-pump">85%</div><div class="ks">MPC decision</div></div>
+    <div class="dm-kpi"><div class="kl">Pump power</div><div class="kv" id="k-kw">42 kW</div><div class="ks" id="k-cube">Cube law at work</div></div>
+    <div class="dm-kpi green"><div class="kl">Energy saved today</div><div class="kv" id="k-save">₹4,180</div><div class="ks">vs. reactive fixed-speed</div></div>
+  </div>
+
+  <div class="dm-card" style="margin-top:16px;">
+    <label style="font-size:0.82rem;color:#A0D8FF;font-weight:500;display:block;margin-bottom:8px;">Simulate time of day — drag to move through 24 hours</label>
+    <input type="range" id="hour" min="0" max="23" value="6" oninput="updateHour(this.value)" style="width:100%;margin-bottom:6px;">
+    <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:rgba(56,225,255,0.4);font-family:'IBM Plex Mono',monospace;">
+      <span>12a</span><span>3a</span><span>6a</span><span>9a</span><span>12p</span><span>3p</span><span>6p</span><span>9p</span><span>11p</span>
+    </div>
+  </div>
+
+  <h2 class="dm-h2">24-hour MPC pump schedule</h2>
+  <p style="font-size:0.88rem;color:#A0D8FF;margin-bottom:12px;">Cyan = off-peak (pump hard), amber = mid tariff (partial), red = peak (coast on tank). Bar height = pump speed %. Click any bar to jump to that hour.</p>
+  <div class="dm-chart-wrap">
+    <div class="dm-chart-bars" id="chart-bars"></div>
+    <div class="dm-chart-labels" id="chart-labels"></div>
+  </div>
+
+  <div class="dm-insight" id="mpc-insight">
+    <strong>MPC at 6 AM:</strong> Off-peak tariff window. Tank at 72%. Pumping at 85% to continue pre-loading before 7 AM peak tariff begins. Expected saving vs. reactive: ₹4,180 today.
+  </div>
+
+  <h2 class="dm-h2" id="billing">Tariff structure — MSEDCL industrial HT</h2>
+  <p style="font-size:0.88rem;color:#A0D8FF;margin-bottom:12px;">TOD tariffs penalise peak-hour consumption. The same kWh of pumping work costs 60% less at night than at peak.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    <button class="dm-btn active" id="t-offpeak" onclick="showTariff('offpeak',this)">Off-peak (10 PM – 6 AM)</button>
+    <button class="dm-btn" id="t-mid" onclick="showTariff('mid',this)">Mid (6 AM – 9 AM, 11 AM – 5 PM)</button>
+    <button class="dm-btn" id="t-peak" onclick="showTariff('peak',this)">Peak (9–11 AM, 5–10 PM)</button>
+  </div>
+  <table class="dm-table">
+    <tr><th>Component</th><th>Rate</th><th>AI strategy</th></tr>
+    <tr><td>Energy charge</td><td id="td-energy" style="font-family:'IBM Plex Mono',monospace;color:#38E1FF;">₹3.2/kWh</td><td id="td-strat">Pump at full speed — cheapest window. Fill tank to 88%+.</td></tr>
+    <tr><td>TOD multiplier</td><td id="td-tod" style="font-family:'IBM Plex Mono',monospace;color:#38E1FF;">0.80× (20% discount)</td><td>Off-peak discount fully exploited</td></tr>
+    <tr><td>Demand charge</td><td style="font-family:'IBM Plex Mono',monospace;color:#38E1FF;">₹400/kVA/month</td><td>VFD keeps power factor &gt;0.95</td></tr>
+    <tr><td>kVAh billing</td><td style="font-family:'IBM Plex Mono',monospace;color:#38E1FF;">Unity PF target</td><td>Capacitor banks auto-switched</td></tr>
+  </table>
+
+  <div class="dm-billing">
+    <h3>🔌 Monthly bill impact — 500 kVA pump station, 100 MLD supply</h3>
+    <p>AI scheduling vs. fixed-speed reactive operation on the same network.</p>
+    <div class="dm-kpi-row">
+      <div class="dm-kpi amber"><div class="kl">Baseline bill</div><div class="kv">₹28.4 L</div><div class="ks">No TOD optimisation</div></div>
+      <div class="dm-kpi green"><div class="kl">AI-optimised bill</div><div class="kv">₹18.1 L</div><div class="ks">MPC + TOD shifting</div></div>
+      <div class="dm-kpi green"><div class="kl">Monthly saving</div><div class="kv">₹10.3 L</div><div class="ks">36% reduction</div></div>
+      <div class="dm-kpi teal"><div class="kl">Simple payback</div><div class="kv">14 mo</div><div class="ks">On AI system capex</div></div>
+    </div>
+  </div>
+
+  <h2 class="dm-h2" id="demand">Demand forecasting — the ML layer</h2>
+  <p style="font-size:0.88rem;color:#A0D8FF;margin-bottom:12px;">The MPC needs to know how much water each zone will need over the next 24 hours. ML learns these patterns continuously.</p>
+  <table class="dm-table">
+    <tr><th>ML input</th><th>Why it matters</th><th>Update frequency</th></tr>
+    <tr><td>Historical zone demand by hour/day</td><td>Baseline demand curve per DMA</td><td>Continuous — 90-day weighted</td></tr>
+    <tr><td>Day of week / holiday calendar</td><td>Industrial Zone C drops 60% on Sundays</td><td>Daily via calendar API</td></tr>
+    <tr><td>Max temperature forecast</td><td>+1°C → +0.8% residential demand</td><td>6-hourly NWP forecast</td></tr>
+    <tr><td>Pressure sensor readings</td><td>Leak detection via model anomaly</td><td>Every 5 minutes</td></tr>
+    <tr><td>Pipe roughness C (calibrated)</td><td>Keeps friction model accurate</td><td>Weekly ML re-fit</td></tr>
+  </table>
+
+</div>
+
+<div class="dm-footer">DeepManthan AI · Water Distribution Network Intelligence · Pump Scheduling Simulator</div>
+
+<script>
+const schedule=[
+  {h:0,t:'off',rate:'₹3.2/kWh',pump:90,kw:48,tank:55,save:1200,ins:'2 AM: Off-peak. Tank at 55%, pumping hard to pre-load. Cheapest hours of the day.'},
+  {h:1,t:'off',rate:'₹3.2/kWh',pump:90,kw:48,tank:62,save:1800,ins:'1 AM: Off-peak. Tank filling steadily. MPC plans to reach 88% before 7 AM peak.'},
+  {h:2,t:'off',rate:'₹3.2/kWh',pump:90,kw:48,tank:70,save:2400,ins:'2 AM: Tank at 70%. Full-speed pumping continues — tariff discount active.'},
+  {h:3,t:'off',rate:'₹3.2/kWh',pump:80,kw:40,tank:77,save:2900,ins:'3 AM: Tank at 77%. MPC eases to 80% — approaching optimal fill target.'},
+  {h:4,t:'off',rate:'₹3.2/kWh',pump:60,kw:22,tank:83,save:3300,ins:'4 AM: Tank at 83%. Cube law at work — 60% speed uses only 22% of rated power.'},
+  {h:5,t:'off',rate:'₹3.2/kWh',pump:40,kw:6, tank:88,save:3600,ins:'5 AM: Tank nearly full at 88%. Minimal pumping — topping off before dawn.'},
+  {h:6,t:'off',rate:'₹3.2/kWh',pump:85,kw:42,tank:72,save:4180,ins:'6 AM: Morning demand rising. Still off-peak — pump at 85%.'},
+  {h:7,t:'pk', rate:'₹8.1/kWh',pump:15,kw:2, tank:60,save:4180,ins:'7 AM: Peak tariff begins. MPC drops to 15%. Coast on the tank for 2+ hours.'},
+  {h:8,t:'pk', rate:'₹8.1/kWh',pump:10,kw:1, tank:48,save:4180,ins:'8 AM: High morning demand drawing tank down. Pump barely running — peak electricity avoided.'},
+  {h:9,t:'pk', rate:'₹8.1/kWh',pump:10,kw:1, tank:36,save:4180,ins:'9 AM: Tank at 36%. MPC monitoring fire-reserve floor (20% minimum).'},
+  {h:10,t:'pk',rate:'₹8.1/kWh',pump:20,kw:3, tank:28,save:4180,ins:'10 AM: Tank low. MPC raises slightly to avoid breaching fire-flow reserve.'},
+  {h:11,t:'mid',rate:'₹5.4/kWh',pump:55,kw:18,tank:30,save:4180,ins:'11 AM: Mid tariff starts. MPC raises to 55% — partial refill at moderate cost.'},
+  {h:12,t:'mid',rate:'₹5.4/kWh',pump:65,kw:26,tank:38,save:4180,ins:'12 PM: Midday. Steady refill. MPC planning ahead for 5 PM peak — target: tank 65%+.'},
+  {h:13,t:'mid',rate:'₹5.4/kWh',pump:70,kw:30,tank:46,save:4180,ins:'1 PM: Tank recovering. MPC at 70% — balancing refill cost vs. peak preparation.'},
+  {h:14,t:'mid',rate:'₹5.4/kWh',pump:72,kw:32,tank:54,save:4180,ins:'2 PM: Pre-loading for evening peak. Tank at 54% and rising on schedule.'},
+  {h:15,t:'mid',rate:'₹5.4/kWh',pump:78,kw:38,tank:61,save:4180,ins:'3 PM: MPC increasing pump — peak tariff starts in 2 hours. Target: 70% tank by 5 PM.'},
+  {h:16,t:'mid',rate:'₹5.4/kWh',pump:82,kw:41,tank:68,save:4180,ins:'4 PM: Final pre-loading. Tank at 68%. MPC on track before peak.'},
+  {h:17,t:'pk', rate:'₹8.1/kWh',pump:10,kw:1, tank:58,save:4180,ins:'5 PM: Peak starts. Pump drops to 10%. Tank at 70% — 4+ hours of gravity supply.'},
+  {h:18,t:'pk', rate:'₹8.1/kWh',pump:10,kw:1, tank:46,save:4180,ins:'6 PM: High evening demand. Tank drawing down. Pump barely running.'},
+  {h:19,t:'pk', rate:'₹8.1/kWh',pump:12,kw:1, tank:36,save:4180,ins:'7 PM: Tank at 36%. MPC watching fire-reserve floor. Peak tariff active.'},
+  {h:20,t:'mid',rate:'₹5.4/kWh',pump:55,kw:18,tank:30,save:4180,ins:'8 PM: Peak ending. Mid tariff. MPC raises to 55% — overnight recovery begins.'},
+  {h:21,t:'off',rate:'₹3.2/kWh',pump:85,kw:42,tank:40,save:4180,ins:'9 PM: Off-peak begins. Pump at 85% — cheap overnight fill cycle starts again.'},
+  {h:22,t:'off',rate:'₹3.2/kWh',pump:90,kw:48,tank:50,save:4180,ins:'10 PM: Full-speed pumping. Tank recovering quickly on cheap off-peak tariff.'},
+  {h:23,t:'off',rate:'₹3.2/kWh',pump:90,kw:48,tank:60,save:4180,ins:'11 PM: Tank at 60% and climbing. Every kWh pumped now costs 60% less than peak.'}
+];
+const tCol={off:'#38E1FF',mid:'#fbbf24',pk:'#f87171'};
+const tLbl={off:'Off-peak',mid:'Mid tariff',pk:'Peak (expensive)'};
+function buildChart(){
+  const bars=document.getElementById('chart-bars'),lbls=document.getElementById('chart-labels');
+  bars.innerHTML='';lbls.innerHTML='';
+  schedule.forEach((s,i)=>{
+    const b=document.createElement('div');
+    b.className='dm-bar-chart';
+    b.style.cssText=`height:${s.pump}%;background:${tCol[s.t]};opacity:0.75;`;
+    b.title=`${s.h}:00 · ${s.pump}% · ${s.rate}`;
+    b.onclick=()=>{document.getElementById('hour').value=i;updateHour(i);};
+    bars.appendChild(b);
+    const l=document.createElement('span');
+    l.textContent=i%3===0?(i===0?'12a':i<12?i+'a':i===12?'12p':(i-12)+'p'):'';
+    lbls.appendChild(l);
+  });
+}
+function updateHour(h){
+  h=parseInt(h);const s=schedule[h];
+  document.getElementById('k-tariff').textContent=tLbl[s.t];
+  document.getElementById('k-tariff').style.color=tCol[s.t];
+  document.getElementById('k-rate').textContent=s.rate+(s.t==='off'?' · pump now':s.t==='pk'?' · avoid pumping':' · partial pump');
+  document.getElementById('k-tank').textContent=s.tank+'%';
+  document.getElementById('k-tank-sub').textContent=s.tank>60?'High reserve':s.tank>30?'Moderate reserve':'Drawing down';
+  document.getElementById('k-pump').textContent=s.pump+'%';
+  document.getElementById('k-kw').textContent=s.kw+' kW';
+  document.getElementById('k-cube').textContent=s.pump+'³÷100²='+(Math.round(Math.pow(s.pump/100,3)*100))+'% rated power';
+  document.getElementById('k-save').textContent='₹'+s.save.toLocaleString();
+  const hr=h===0?'12 AM':h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
+  document.getElementById('mpc-insight').innerHTML=`<strong>MPC at ${hr}:</strong> ${s.ins}`;
+  document.querySelectorAll('.dm-bar-chart').forEach((b,i)=>b.classList.toggle('selected',i===h));
+}
+const td={off:{e:'₹3.2/kWh',t:'0.80× (20% discount)',s:'Pump at full speed — cheapest window. Fill tank to 88%+.'},mid:{e:'₹5.4/kWh',t:'1.00× (no modifier)',s:'Moderate pumping. Refill after peak draw-down.'},pk:{e:'₹8.1/kWh',t:'1.20× (20% surcharge)',s:'Minimum pumping only. Coast on elevated tank.'}};
+function showTariff(k,el){
+  document.querySelectorAll('.dm-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const d=td[k];
+  document.getElementById('td-energy').textContent=d.e;
+  document.getElementById('td-tod').textContent=d.t;
+  document.getElementById('td-strat').textContent=d.s;
+}
+buildChart();updateHour(6);
+</script>
+</body>
+</html>

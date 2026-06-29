@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Distribution — Concepts & Terminology</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="dm-nav">
+  <span class="dm-nav-brand">DeepManthan AI</span>
+  <span class="dm-nav-sep">|</span>
+  <a href="index.html">← Back to hub</a>
+</div>
+
+<div class="dm-page-header">
+  <div class="dm-eyebrow">Concepts &amp; Terminology</div>
+  <h1>Water distribution fundamentals</h1>
+  <p>A plain-language reference for the core ideas behind a city water network: what the numbers mean, what you can control, and where the energy goes.</p>
+  <div class="dm-toc">
+    <a href="#flow">1 · Flow &amp; Pressure</a>
+    <a href="#hazen">2 · Hazen-Williams</a>
+    <a href="#pump">3 · Pump Physics</a>
+    <a href="#levers">4 · Control Levers</a>
+    <a href="#savings">5 · Where Savings Come From</a>
+    <a href="#network">6 · Full Network Flow</a>
+  </div>
+</div>
+
+<div class="dm-container">
+
+  <h2 class="dm-h2" id="flow">1 · Flow rate and head pressure</h2>
+  <p style="font-size:0.9rem;color:#A0D8FF;line-height:1.7;margin-bottom:12px;">Two numbers define the state of any point in a water network: <strong style="color:#38E1FF;">flow rate</strong> (how much water is moving) and <strong style="color:#38E1FF;">head</strong> (the energy available to push it). Head is expressed in metres of water column — it bundles pressure, velocity, and elevation into one comparable number.</p>
+
+  <div class="dm-kpi-row">
+    <div class="dm-kpi cyan"><div class="kl">Flow rate Q</div><div class="kv">L/s or m³/h</div><div class="ks">Volume passing a point per second</div></div>
+    <div class="dm-kpi cyan"><div class="kl">Pressure head H</div><div class="kv">metres (m)</div><div class="ks">Energy per unit weight of water</div></div>
+    <div class="dm-kpi teal"><div class="kl">Hydraulic grade line</div><div class="kv">HGL</div><div class="ks">Head at every network point</div></div>
+    <div class="dm-kpi teal"><div class="kl">Min. service pressure</div><div class="kv">7–10 m</div><div class="ks">Regulatory floor at consumer tap</div></div>
+  </div>
+
+  <h2 class="dm-h2" id="hazen">2 · The Hazen-Williams equation — pipe friction model</h2>
+  <p style="font-size:0.9rem;color:#A0D8FF;line-height:1.7;margin-bottom:10px;">Every pipe segment loses head due to friction. The Hazen-Williams equation calculates exactly how much:</p>
+  <div class="dm-formula">h<sub>f</sub> = 10.67 · L · Q<sup>1.852</sup> / (C<sup>1.852</sup> · D<sup>4.87</sup>)</div>
+
+  <table class="dm-table">
+    <tr><th>Symbol</th><th>Meaning</th><th>Typical value</th></tr>
+    <tr><td><strong style="color:#38E1FF;">h<sub>f</sub></strong></td><td>Head loss due to friction (metres)</td><td>Calculated output</td></tr>
+    <tr><td><strong style="color:#38E1FF;">L</strong></td><td>Pipe length (metres)</td><td>10 – 5 000 m per segment</td></tr>
+    <tr><td><strong style="color:#38E1FF;">Q</strong></td><td>Flow rate (m³/s)</td><td>0.001 – 1 m³/s</td></tr>
+    <tr><td><strong style="color:#38E1FF;">C</strong></td><td>Roughness coefficient</td><td>150 new PVC → 70 old cast iron</td></tr>
+    <tr><td><strong style="color:#38E1FF;">D</strong></td><td>Internal pipe diameter (metres)</td><td>0.05 – 1.2 m</td></tr>
+  </table>
+
+  <div class="dm-insight"><strong>Why C matters for AI:</strong> As pipes age, mineral deposits lower C from ~150 (new PVC) to ~70 (old cast iron). The ML calibration layer continuously updates C for every pipe segment by comparing predicted vs. measured pressures — keeping the model accurate without expensive physical surveys.</div>
+
+  <h3 class="dm-h3">Live friction loss calculator</h3>
+  <p style="font-size:0.85rem;color:#A0D8FF;margin-bottom:12px;">Fixed: 50 L/s flow through a 300 mm pipe. Adjust pipe length and roughness.</p>
+  <div class="dm-card">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+      <label style="min-width:140px;font-size:0.83rem;color:#A0D8FF;">Pipe length (m)</label>
+      <input type="range" id="sl-len" min="100" max="2000" value="500" step="50" oninput="calcHL()" style="flex:1;">
+      <span id="out-len" style="min-width:56px;font-size:0.85rem;font-weight:700;color:#38E1FF;font-family:'IBM Plex Mono',monospace;">500 m</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <label style="min-width:140px;font-size:0.83rem;color:#A0D8FF;">Roughness C</label>
+      <input type="range" id="sl-c" min="70" max="150" value="120" step="5" oninput="calcHL()" style="flex:1;">
+      <span id="out-c" style="min-width:56px;font-size:0.85rem;font-weight:700;color:#38E1FF;font-family:'IBM Plex Mono',monospace;">C = 120</span>
+    </div>
+  </div>
+  <div class="dm-kpi-row">
+    <div class="dm-kpi cyan"><div class="kl">Head loss</div><div class="kv" id="hl-result">3.4 m</div><div class="ks" id="hl-pump">~0.22 kW extra pump power</div></div>
+    <div class="dm-kpi teal"><div class="kl">Pressure drop</div><div class="kv" id="hl-kpa">33 kPa</div><div class="ks">1 m head ≈ 9.81 kPa</div></div>
+  </div>
+
+  <h2 class="dm-h2" id="pump">3 · Pump physics — affinity laws</h2>
+  <p style="font-size:0.9rem;color:#A0D8FF;line-height:1.7;margin-bottom:10px;">Pump behaviour at different speeds is precisely described by the affinity laws. The <strong style="color:#38E1FF;">cubic relationship between speed and power</strong> is why AI variable-speed scheduling saves so much energy.</p>
+  <div class="dm-formula">Q ∝ N &nbsp;&nbsp;|&nbsp;&nbsp; Head ∝ N² &nbsp;&nbsp;|&nbsp;&nbsp; Power ∝ N³</div>
+
+  <h3 class="dm-h3">The cube law in practice</h3>
+  <div style="margin:10px 0 16px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:0.82rem;">
+      <span style="width:160px;color:#A0D8FF;">100% speed → Power</span>
+      <div style="flex:1;background:rgba(56,225,255,0.1);border-radius:3px;height:14px;overflow:hidden;"><div style="width:100%;height:14px;background:#38E1FF;border-radius:3px;"></div></div>
+      <span style="width:42px;font-weight:700;color:#38E1FF;font-family:'IBM Plex Mono',monospace;text-align:right;">100%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:0.82rem;">
+      <span style="width:160px;color:#A0D8FF;">80% speed → Power</span>
+      <div style="flex:1;background:rgba(56,225,255,0.1);border-radius:3px;height:14px;overflow:hidden;"><div style="width:51%;height:14px;background:#2DD4BF;border-radius:3px;"></div></div>
+      <span style="width:42px;font-weight:700;color:#2DD4BF;font-family:'IBM Plex Mono',monospace;text-align:right;">51%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:0.82rem;">
+      <span style="width:160px;color:#A0D8FF;">60% speed → Power</span>
+      <div style="flex:1;background:rgba(56,225,255,0.1);border-radius:3px;height:14px;overflow:hidden;"><div style="width:22%;height:14px;background:#7DD3C0;border-radius:3px;"></div></div>
+      <span style="width:42px;font-weight:700;color:#7DD3C0;font-family:'IBM Plex Mono',monospace;text-align:right;">22%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;font-size:0.82rem;">
+      <span style="width:160px;color:#A0D8FF;">40% speed → Power</span>
+      <div style="flex:1;background:rgba(56,225,255,0.1);border-radius:3px;height:14px;overflow:hidden;"><div style="width:6%;height:14px;background:rgba(56,225,255,0.4);border-radius:3px;"></div></div>
+      <span style="width:42px;font-weight:700;color:#A0D8FF;font-family:'IBM Plex Mono',monospace;text-align:right;">6%</span>
+    </div>
+  </div>
+
+  <div class="dm-insight"><strong>The MPC opportunity:</strong> If demand drops 20% and the AI slows the pump to 80% speed, power drops to 51% — saving nearly half the electricity for a modest reduction in output. A traditional fixed-speed pump throttled by a valve wastes that energy as heat instead.</div>
+
+  <div class="dm-kpi-row">
+    <div class="dm-kpi green"><div class="kl">Specific energy (optimised)</div><div class="kv">0.35 kWh/m³</div><div class="ks">AI scheduling + VFDs</div></div>
+    <div class="dm-kpi amber"><div class="kl">Specific energy (baseline)</div><div class="kv">0.92 kWh/m³</div><div class="ks">Fixed-speed, reactive</div></div>
+    <div class="dm-kpi green"><div class="kl">Typical saving</div><div class="kv">25–40%</div><div class="ks">On pump energy alone</div></div>
+  </div>
+
+  <h2 class="dm-h2" id="levers">4 · What you control vs. what you don't</h2>
+  <table class="dm-table">
+    <tr><th>Control lever (AI sets these)</th><th>Environmental / demand (given)</th></tr>
+    <tr><td>Pump speed setpoint (% via VFD)</td><td>Consumer demand per zone per hour</td></tr>
+    <tr><td>Number of pumps running (staging)</td><td>Elevation profile (gravity head)</td></tr>
+    <tr><td>PRV setpoint (metres of head)</td><td>Pipe roughness C — ML tracks drift</td></tr>
+    <tr><td>Tank fill / draw schedule</td><td>Fire-flow reserve requirements</td></tr>
+    <tr><td>Zone isolation valve position</td><td>Water quality / chlorine constraints</td></tr>
+  </table>
+
+  <h2 class="dm-h2" id="savings">5 · Where the biggest savings come from</h2>
+  <ol style="padding-left:1.4rem;font-size:0.88rem;color:#A0D8FF;line-height:2.2;">
+    <li><strong style="color:#38E1FF;">Shift pumping to off-peak tariff windows</strong> — the elevated tank stores water pumped cheaply at night; gravity delivers it during expensive peak hours.</li>
+    <li><strong style="color:#38E1FF;">Reduce pump speed during low-demand periods</strong> — the cube law means even modest speed reductions save disproportionate energy.</li>
+    <li><strong style="color:#38E1FF;">Optimal pump staging</strong> — run fewer, larger pumps at their best efficiency point rather than many small pumps at low load.</li>
+    <li><strong style="color:#38E1FF;">Reduce excess pressure</strong> — every 10 m of excess head costs pump energy and accelerates pipe joint wear. PRV optimisation trims this.</li>
+    <li><strong style="color:#38E1FF;">Early leak detection</strong> — a 5% leak on a 100 MLD supply wastes 5 MLD of pumped water every day. ML detects and localises in hours, not weeks.</li>
+  </ol>
+
+  <h2 class="dm-h2" id="network">6 · Overall components &amp; flow</h2>
+  <p style="font-size:0.9rem;color:#A0D8FF;line-height:1.7;margin-bottom:14px;">How water travels from the source all the way to the consumer tap:</p>
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:14px 0;">
+    <div style="background:rgba(56,225,255,0.08);border:1px solid rgba(56,225,255,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;text-align:center;">
+      <strong style="color:#38E1FF;display:block;">Reservoir</strong><span style="color:#7DD3C0;font-size:0.72rem;">raw source</span>
+    </div>
+    <span style="color:#38E1FF;font-size:1.2rem;">→</span>
+    <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;text-align:center;">
+      <strong style="color:#fbbf24;display:block;">Pump station</strong><span style="color:#7DD3C0;font-size:0.72rem;">adds head</span>
+    </div>
+    <span style="color:#38E1FF;font-size:1.2rem;">→</span>
+    <div style="background:rgba(56,225,255,0.12);border:1px solid rgba(56,225,255,0.45);border-radius:8px;padding:10px 14px;font-size:0.82rem;text-align:center;">
+      <strong style="color:#38E1FF;display:block;">Elevated tank</strong><span style="color:#7DD3C0;font-size:0.72rem;">stores energy</span>
+    </div>
+    <span style="color:#38E1FF;font-size:1.2rem;">→</span>
+    <div style="background:rgba(56,225,255,0.06);border:1px solid rgba(56,225,255,0.2);border-radius:8px;padding:10px 14px;font-size:0.82rem;text-align:center;">
+      <strong style="color:#38E1FF;display:block;">Trunk mains</strong><span style="color:#7DD3C0;font-size:0.72rem;">distribution</span>
+    </div>
+    <span style="color:#38E1FF;font-size:1.2rem;">→</span>
+    <div style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;text-align:center;">
+      <strong style="color:#a78bfa;display:block;">PRV / zones</strong><span style="color:#7DD3C0;font-size:0.72rem;">pressure step-down</span>
+    </div>
+    <span style="color:#38E1FF;font-size:1.2rem;">→</span>
+    <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;text-align:center;">
+      <strong style="color:#2DD4BF;display:block;">Consumer tap</strong><span style="color:#7DD3C0;font-size:0.72rem;">min 7 m head</span>
+    </div>
+  </div>
+  <p style="font-size:0.88rem;color:#A0D8FF;line-height:1.75;">The <strong style="color:#38E1FF;">reservoir</strong> supplies water at near-zero head. The <strong style="color:#38E1FF;">pump station</strong> adds ~50 m head by expending electricity. The <strong style="color:#38E1FF;">elevated tank</strong> is the system battery — gravity gives it potential energy that maintains network pressure even when pumps are off. <strong style="color:#38E1FF;">PRVs</strong> step down head at zone boundaries, protecting downstream pipes. The consumer tap must receive at least 7–10 m head for adequate flow.</p>
+
+</div>
+
+<div class="dm-footer">DeepManthan AI · Water Distribution Network Intelligence · Concepts &amp; Terminology</div>
+
+<script>
+function calcHL() {
+  const L = +document.getElementById('sl-len').value;
+  const C = +document.getElementById('sl-c').value;
+  const Q = 0.05, D = 0.3;
+  const hf = 10.67 * L * Math.pow(Q,1.852) / (Math.pow(C,1.852) * Math.pow(D,4.87));
+  const kPa = (hf * 9.81).toFixed(0);
+  const kW = (1000 * 9.81 * Q * hf / 750).toFixed(2);
+  document.getElementById('out-len').textContent = L + ' m';
+  document.getElementById('out-c').textContent = 'C = ' + C;
+  document.getElementById('hl-result').textContent = hf.toFixed(1) + ' m';
+  document.getElementById('hl-kpa').textContent = kPa + ' kPa';
+  document.getElementById('hl-pump').textContent = '~' + kW + ' kW extra pump power';
+}
+calcHL();
+</script>
+</body>
+</html>
