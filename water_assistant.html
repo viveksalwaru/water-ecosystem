@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Network — Operations Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="dm-nav">
+  <span class="dm-nav-brand">DeepManthan AI</span>
+  <span class="dm-nav-sep">|</span>
+  <a href="index.html">← Back to hub</a>
+  <a href="water_mas.html" class="nav-btn">Live Demo</a>
+</div>
+
+<div class="dm-page-header">
+  <div class="dm-eyebrow">Operations Assistant</div>
+  <h1>Network operations Q&amp;A</h1>
+  <p>Ask the network questions in plain English. 60+ operator queries — pumps, pipes, tanks, leaks, energy, and AI reasoning — each answered against one live network scenario. Filter by topic or search.</p>
+</div>
+
+<div class="dm-container" style="max-width:860px;">
+
+  <div class="dm-scenario">
+    <div class="sc-label">Live plant scenario — all answers reference this state</div>
+    <div class="sc-vals">
+      <div class="dm-sv"><span class="sv">6:30 AM</span><span class="sk">Time of day</span></div>
+      <div class="dm-sv"><span class="sv">72%</span><span class="sk">Tank level</span></div>
+      <div class="dm-sv"><span class="sv">85% VFD</span><span class="sk">Pump speed</span></div>
+      <div class="dm-sv"><span class="sv">42 kW</span><span class="sk">Pump power</span></div>
+      <div class="dm-sv"><span class="sv">₹3.2/kWh</span><span class="sk">Tariff (off-peak)</span></div>
+      <div class="dm-sv"><span class="sv">All zones OK</span><span class="sk">Network health</span></div>
+      <div class="dm-sv"><span class="sv">94 MLD</span><span class="sk">Daily demand forecast</span></div>
+    </div>
+  </div>
+
+  <div class="dm-filter-row">
+    <button class="dm-filter active" onclick="filterQ('all',this)">All</button>
+    <button class="dm-filter" onclick="filterQ('pumps',this)">Pumps</button>
+    <button class="dm-filter" onclick="filterQ('pipes',this)">Pipes &amp; pressure</button>
+    <button class="dm-filter" onclick="filterQ('tanks',this)">Tanks &amp; storage</button>
+    <button class="dm-filter" onclick="filterQ('leaks',this)">Leaks &amp; faults</button>
+    <button class="dm-filter" onclick="filterQ('energy',this)">Energy &amp; billing</button>
+    <button class="dm-filter" onclick="filterQ('ai',this)">AI reasoning</button>
+  </div>
+
+  <div class="dm-search-wrap">
+    <input type="text" id="search" placeholder="Search questions…" oninput="filterSearch(this.value)">
+  </div>
+
+  <div id="q-list"></div>
+
+</div>
+
+<div class="dm-footer">DeepManthan AI · Water Distribution Network Intelligence · Operations Assistant</div>
+
+<script>
+const QA=[
+  {tag:'pumps',q:'Why is the pump running at 85% and not 100%?',a:'<strong>The MPC optimises for minimum total energy cost, not maximum throughput.</strong> At 85% VFD speed, the pump delivers sufficient flow to fill the tank on schedule before the 7 AM peak tariff window. Running at 100% would overfill the tank, waste electricity, and create overpressure that accelerates pipe joint wear. The affinity law means 85% speed = ~61% of rated power — a large saving vs. full speed.'},
+  {tag:'pumps',q:'What is a VFD and why does it matter?',a:'A <strong>Variable Frequency Drive (VFD)</strong> controls the AC motor speed by varying the electrical supply frequency — from ~10 Hz (minimum) to 50 Hz (100% speed). Without a VFD, a pump runs at fixed speed and flow is throttled by a valve, wasting energy as heat. With a VFD, the pump speed itself is reduced, exploiting the cube law: halving the speed uses only 12.5% of rated power.'},
+  {tag:'pumps',q:'Why not just run the pump at low speed all the time?',a:'Two constraints prevent this. First, <strong>minimum pressure</strong>: consumer taps require 7–10 m head minimum — if the pump runs too slowly, remote zones drop below this floor. Second, <strong>water quality</strong>: very low flow velocities in mains encourage biofilm growth and increase chlorine decay. The MPC balances energy minimisation against both pressure and water quality constraints simultaneously.'},
+  {tag:'pumps',q:'How does the AI decide the pump speed setpoint every 15 minutes?',a:'The MPC runs an optimisation over a 24-hour horizon using: (1) the calibrated Hazen-Williams network model to predict pressure at every node for any pump speed, (2) the ML demand forecast per zone, (3) the current tariff schedule, and (4) the tank level. It selects the pump speed sequence that minimises total electricity cost while satisfying all pressure and tank constraints.'},
+  {tag:'pumps',q:'When does the AI stage a second pump on?',a:'Staging has two triggers: <strong>demand-based</strong> (when one pump at 100% cannot meet demand) and <strong>efficiency-based</strong> (when one large pump at very low load is less efficient than two smaller pumps sharing the load). The MPC pre-emptively stages pumps before pressure violations occur, not reactively after.'},
+  {tag:'pumps',q:'What is pump best efficiency point (BEP)?',a:'Every centrifugal pump has a <strong>Best Efficiency Point</strong> — a specific flow rate at which it converts shaft power to hydraulic energy most efficiently. Operating significantly above or below BEP causes higher specific energy and accelerated wear. The MPC includes BEP constraints to avoid scheduling pumps at very low or very high load factors.'},
+  {tag:'pumps',q:'What causes pump cavitation and how is it detected?',a:'<strong>Cavitation</strong> occurs when inlet pressure drops below the water\'s vapour pressure, creating vapour bubbles that collapse violently against the impeller. AI detects it via vibration sensors and acoustic signatures — a characteristic high-frequency crackling. Immediate response: reduce VFD speed and alert maintenance.'},
+  {tag:'pipes',q:'What is the Hazen-Williams roughness coefficient C?',a:'C is the <strong>pipe friction coefficient</strong>: new PVC pipes have C ≈ 140–150, while old unlined cast iron heavily coated in deposits may have C as low as 60–80. Lower C means more head loss for the same flow, so the pump must work harder. The ML layer tracks C for every pipe segment by comparing model predictions to sensor readings.'},
+  {tag:'pipes',q:'Zone A head dropped from 28 m to 14 m. What happened?',a:'A 50% drop in head suggests one of three causes: (1) <strong>sudden demand increase</strong> — new consumers or heatwave; (2) <strong>pipe roughness increase</strong> — blockage drastically increasing friction; (3) <strong>PRV malfunction</strong>. The AI compares the sensor reading against the physics model prediction. If demand matches the ML forecast, the anomaly is pipe-side; if not, it\'s demand-driven.'},
+  {tag:'pipes',q:'What is the Hydraulic Grade Line (HGL)?',a:'The <strong>HGL</strong> shows total hydraulic head at every point in the network — the height water would rise to in a standpipe at each node. It slopes downward in the direction of flow; the slope represents friction loss per unit length. An elevated tank sets the HGL at its water surface; pipes must maintain HGL above pipe elevation plus minimum service pressure.'},
+  {tag:'pipes',q:'Why is Zone B pressure lower than Zone A even though it\'s closer to the pump?',a:'<strong>Elevation matters.</strong> Zone B is at a higher elevation than Zone A. Gravity reduces pressure head by 1 m for every 1 m of elevation gained. Additionally, Zone B commercial consumers draw higher instantaneous flow rates, creating more friction loss. The physics model accounts for both elevation and friction when predicting zone pressures.'},
+  {tag:'pipes',q:'How does the AI locate a leak to within 3 pipe segments?',a:'The ML model predicts head at every instrumented node. When a sensor reads lower than predicted — consistently over 15–20 minutes — the AI runs a fault-injection simulation: it tests different leak locations and magnitudes, finding the location that produces the observed pressure pattern across all sensors. With sensor spacing of 200–500 m, this pinpoints leaks to 1–2 pipe segments.'},
+  {tag:'tanks',q:'Why is the tank at 72% and not being filled faster?',a:'The MPC is balancing two objectives: (1) reaching ~88% fill by 7 AM when peak tariff starts, and (2) not wasting electricity filling faster than necessary. At the current rate (85% VFD, 32 L/s net inflow), the tank will reach 88% in ~80 minutes — right on schedule. Filling faster would require 95–100% VFD and more electricity with no benefit since demand won\'t increase for another 30 minutes.'},
+  {tag:'tanks',q:'What is the minimum safe tank level?',a:'<strong>Two constraints set the floor:</strong> (1) <strong>Fire reserve</strong>: regulations require 2–4 hours of peak fire-flow held in reserve — approximately 15–20% tank capacity; (2) <strong>Minimum pressure</strong>: the tank must maintain 7 m head at the most remote, highest-elevation consumer. The combined floor is typically 20–25% — the MPC overrides energy-saving scheduling to maintain this floor at all times.'},
+  {tag:'tanks',q:'How does an elevated tank maintain pressure without the pump running?',a:'The tank\'s water surface is physically higher than the consumers it serves. <strong>Potential energy (mgh) converts to pressure</strong> as water flows downward — approximately 9.81 kPa (1 m head) for every metre of elevation difference. A tank whose water surface is 35 m above a consumer provides ~35 m head with zero pump energy.'},
+  {tag:'tanks',q:'Why does tank level fluctuate so much across the day?',a:'Because demand varies 4–8× between night minimum and morning peak, while hydraulics limit how fast the tank can be refilled. The MPC deliberately draws the tank down during peak tariff hours (avoiding expensive pumping) and refills during cheap off-peak hours overnight. The tank absorbs the temporal mismatch between cheapest supply (night) and highest demand (daytime).'},
+  {tag:'leaks',q:'How long does it take the AI to detect a new leak?',a:'<strong>Large leaks (&gt;200 L/min):</strong> 5–15 minutes. <strong>Medium leaks (50–200 L/min):</strong> 15–45 minutes — ML needs time to confirm the anomaly is not demand variation. <strong>Small leaks (&lt;50 L/min):</strong> 2–12 hours or longer. Comparison: traditional field survey detection averages 2–4 weeks.'},
+  {tag:'leaks',q:'Can the AI tell the difference between a leak and a sudden demand increase?',a:'Yes. The AI compares the pressure anomaly against two predictions: what pressure would be expected if demand jumped, and what pressure would be expected if a leak opened. <strong>A demand spike reduces pressure uniformly across a zone; a leak creates a steeper gradient — lower pressure downstream of the leak point, less affected upstream.</strong>'},
+  {tag:'leaks',q:'What is non-revenue water (NRW) and why does AI help?',a:'<strong>NRW</strong> is water that enters the distribution system but is not billed — including real losses (leaks, bursts) and apparent losses (meter errors, illegal connections). India\'s urban utilities average 30–40% NRW. Since pumping costs money, reducing NRW directly reduces operating cost. AI leak detection finds and fixes a 100 L/min leak, saving ~144 m³/day of pumped water and all associated energy.'},
+  {tag:'leaks',q:'How does night flow analysis help detect leaks?',a:'Between 2–4 AM, consumer demand is at its absolute minimum — typically below 5% of daytime peak. Any flow measured in a DMA during this window is primarily leakage. The AI plots the <strong>minimum night flow (MNF)</strong> trend: a rising MNF baseline over weeks indicates growing leakage in that DMA. When MNF crosses a threshold, the system flags the DMA for investigation and triangulates using pressure sensors.'},
+  {tag:'energy',q:'What is specific energy and how do we benchmark?',a:'<strong>Specific energy = kWh consumed per m³ of water delivered.</strong> Typical ranges: gravity-fed 0.1–0.2 kWh/m³, efficient pumped systems 0.3–0.5 kWh/m³, poor performers 1.0–2.0 kWh/m³. This system is at 0.38 kWh/m³ — good but not best-in-class. The AI\'s primary job is to reduce this number through pump scheduling, speed optimisation, and PRV setpoint management.'},
+  {tag:'energy',q:'What is the TOD tariff and how does the AI exploit it?',a:'TOD tariffs charge different rates at different times to reflect grid congestion. MSEDCL industrial HT: off-peak ₹3.2/kWh (10 PM–6 AM), mid ₹5.4/kWh, peak ₹8.1/kWh. The AI treats the elevated tank as a battery — pump cheaply at night, store it, let gravity deliver it during peak hours. <strong>Same cubic metres, 60% lower energy cost per kWh.</strong>'},
+  {tag:'energy',q:'What is demand charge and how does the AI manage it?',a:'<strong>Demand charge</strong> is a fixed monthly fee based on the peak power drawn in any 15-minute window — typically ₹350–500/kVA/month. A brief spike can cost ₹15,000–20,000 regardless of duration. The AI monitors the rolling peak and avoids staging patterns that would create a new peak — soft-starting the standby pump over 2–3 minutes rather than across-the-line starting.'},
+  {tag:'energy',q:'What is power factor and why does the utility penalise poor PF?',a:'<strong>Power factor (PF)</strong> is the ratio of real power (kW) to apparent power (kVA). Induction motors draw reactive current that contributes to kVA but does no useful work. MSEDCL charges on kVAh (apparent energy), so low PF inflates the bill. The AI ensures capacitor banks maintain PF &gt;0.95, minimising the kVAh penalty.'},
+  {tag:'ai',q:'What is model predictive control (MPC) and why use it for water networks?',a:'<strong>MPC</strong> solves at each decision step for the best sequence of control actions over a 24-hour horizon subject to constraints. It uses the calibrated Hazen-Williams hydraulic model to predict outcomes, optimises, executes the first action, then repeats. MPC is superior to rule-based control because it plans ahead — pre-filling the tank before cheap tariff ends rather than reacting after it\'s already expensive.'},
+  {tag:'ai',q:'How does the ML model learn the demand pattern?',a:'The ML demand model is a time-series forecaster (gradient boosted trees or LSTM) trained on 2+ years of DMA flow meter data. Features include: hour of day, day of week, month, public holidays, weather (max temperature, humidity), and special events. The model outputs expected L/s demand per DMA for each 15-minute slot over the next 24 hours and is <strong>retrained weekly</strong> on the most recent data.'},
+  {tag:'ai',q:'How does the AI know which pipe has a leak?',a:'The AI runs a <strong>pressure-state estimation</strong> algorithm. Given observed pressures at all instrumented nodes and known demands, it calculates what the network state must look like to produce those readings. An unexplained negative-pressure source (demand with no metered consumer) localises the leak. More pressure sensors = finer spatial resolution; modern systems target sensor spacing of 200–300 m in critical mains.'},
+  {tag:'ai',q:'Can the AI predict pipe failures before they happen?',a:'<strong>Yes — predictive asset management.</strong> The AI tracks: (1) pipe roughness C value trend (declining C = growing corrosion); (2) anomalous pressure fluctuations indicating early-stage cracking; (3) pipe age, material, and historical failure rates. These signals combine into a <strong>pipe failure probability score</strong> per segment. High-risk segments are flagged for proactive inspection before a burst, not after.'},
+  {tag:'ai',q:'What happens if the AI makes a wrong decision?',a:'The MPC operates within hard safety constraints that cannot be violated regardless of the optimisation result: minimum pressure floor, minimum tank level (fire reserve), maximum pump power, and maximum PRV setpoint. If the physics model produces an infeasible solution, the controller defaults to a safe operating mode and raises an alert. Decisions are reviewed at 15-minute intervals — an incorrect pump speed is corrected within 15 minutes.'},
+];
+function render(items){
+  const list=document.getElementById('q-list');list.innerHTML='';
+  items.forEach(item=>{
+    const d=document.createElement('div');d.className='dm-qa';d.dataset.tag=item.tag;
+    d.innerHTML=`<div class="dm-qa-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="dm-qa-tag ${item.tag}">${item.tag}</span>
+      <span class="dm-qa-q">${item.q}</span>
+      <span class="dm-qa-chev">▼</span>
+    </div><div class="dm-qa-answer"><p>${item.a}</p></div>`;
+    list.appendChild(d);
+  });
+}
+let af='all';
+function filterQ(tag,el){
+  af=tag;document.querySelectorAll('.dm-filter').forEach(f=>f.classList.remove('active'));el.classList.add('active');
+  applyFilters(document.getElementById('search').value.toLowerCase());
+}
+function filterSearch(v){applyFilters(v.toLowerCase());}
+function applyFilters(q){
+  render(QA.filter(item=>(af==='all'||item.tag===af)&&(!q||item.q.toLowerCase().includes(q)||item.a.toLowerCase().includes(q))));
+}
+render(QA);
+</script>
+</body>
+</html>
